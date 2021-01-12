@@ -1,7 +1,7 @@
 version: "3.7"
 services:
-  oengus_patreon:
-    container_name: oengus-patreon
+  oengus_bot:
+    container_name: oengus-discord-bot
     build:
       context: .
     environment:

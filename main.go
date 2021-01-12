@@ -20,11 +20,11 @@ func main() {
 		return
 	}
 
-	// Register the messageCreate func as a callback for MessageCreate events.
+	dg.AddHandler(ready)
 	dg.AddHandler(messageCreate)
 
 	// In this example, we only care about receiving message events.
-	dg.Identify.Intents = discordgo.MakeIntent(discordgo.IntentsGuildMessages)
+	dg.Identify.Intents = discordgo.MakeIntent(discordgo.IntentsGuildMembers | discordgo.IntentsGuildMessages)
 
 	// Open a websocket connection to Discord and begin listening.
 	err = dg.Open()
@@ -43,16 +43,28 @@ func main() {
 	dg.Close()
 }
 
+func ready(s *discordgo.Session, event *discordgo.Ready) {
+	usd := &discordgo.UpdateStatusData{
+		Status: "online",
+	}
+
+	usd.Game = &discordgo.Game{
+		Name: "your marathons",
+		Type: 5, // Competing in
+		URL:  "",
+	}
+
+	s.UpdateStatusComplex(*usd)
+}
 // This function will be called (due to AddHandler above) every time a new
 // message is created on any channel that the authenticated bot has access to.
 func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 
-	// Ignore all messages created by the bot itself
-	// This isn't required in this specific example but it's a good practice.
-	if m.Author.ID == s.State.User.ID || m.Author.Bot {
+	// Ignore all messages created by bots
+	if m.Author.Bot {
 		return
 	}
-	// If the message is "ping" reply with "Pong!"
+
 	if m.Content == "o!invite" {
 		s.ChannelMessageSend(m.ChannelID, "Invite me with this link: <https://discord.com/api/oauth2/authorize?client_id=559625844197163008&permissions=68608&scope=bot>")
 	}

@@ -1,4 +1,4 @@
-name: Publish Development Docker Image
+name: Publish Docker Image
 on:
     push:
         branches: [master]
@@ -9,9 +9,7 @@ jobs:
         steps:
             - name: Check out the repo
               uses: actions/checkout@v2
-              with:
-                submodules: true
-            - name: Push oengusdotdev to GitHub Packages
+            - name: Push bot to GitHub Packages
               uses: docker/build-push-action@v1
               with:
                 username: ${{ github.actor }}
@@ -19,7 +17,3 @@ jobs:
                 registry: docker.pkg.github.com
                 repository: duncte123/oengus-discord-bot/bot
                 tags: latest
-            - name: Trigger dev webhook
-              uses: zzzze/webhook-trigger@v1.0.0
-              with:
-                webhook_url: ${{ secrets.DEV_WEBHOOK_URL }}
