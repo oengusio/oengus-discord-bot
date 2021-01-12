@@ -1,0 +1,8 @@
+version: "3.7"
+services:
+  oengus_patreon:
+    container_name: oengus-patreon
+    build:
+      context: .
+    environment:
+      - BOT_TOKEN=
