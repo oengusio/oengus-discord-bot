@@ -1,12 +1,12 @@
 package main
 
 import (
-	"fmt"
-	"os"
-	"os/signal"
-	"syscall"
+    "fmt"
+    "os"
+    "os/signal"
+    "syscall"
 
-	"github.com/bwmarrin/discordgo"
+    "github.com/bwmarrin/discordgo"
 )
 
 var botToken = os.Getenv("BOT_TOKEN")
@@ -65,7 +65,15 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		return
 	}
 
-	if m.Content == "o!invite" {
-		s.ChannelMessageSend(m.ChannelID, "Invite me with this link: <https://discord.com/api/oauth2/authorize?client_id=559625844197163008&permissions=68608&scope=bot>")
-	}
+    switch m.Content {
+    case "<@559625844197163008>", "<@!559625844197163008>":
+        s.ChannelMessageSend(m.ChannelID, "My commands can be viewed with `o!help`")
+        break
+    case "o!help":
+        s.ChannelMessageSend(m.ChannelID, "Current command list:\n`o!invite`: Get an invite link for the bot")
+        break
+    case "o!invite":
+        s.ChannelMessageSend(m.ChannelID, "Invite me with this link: <https://oengus.fun/bot>")
+        break
+    }
 }
