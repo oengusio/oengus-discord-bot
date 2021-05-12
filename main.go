@@ -49,8 +49,8 @@ func ready(s *discordgo.Session, event *discordgo.Ready) {
 	}
 
 	usd.Game = &discordgo.Game{
-		Name: "your marathons",
-		Type: 5, // Competing in
+		Name: "o!help",
+		Type: 2, // Listening to
 		URL:  "",
 	}
 
@@ -65,15 +65,21 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		return
 	}
 
+	// TODO: slash commands
     switch m.Content {
     case "<@559625844197163008>", "<@!559625844197163008>":
         s.ChannelMessageSend(m.ChannelID, "My commands can be viewed with `o!help`")
         break
     case "o!help":
-        s.ChannelMessageSend(m.ChannelID, "Current command list:\n`o!invite`: Get an invite link for the bot")
+        s.ChannelMessageSend(m.ChannelID, "Current command list:\n" +
+            "`o!invite`: Get an invite link for the bot\n" +
+            "`o!discord`: Gives the invite to the oengus discord server.")
         break
     case "o!invite":
         s.ChannelMessageSend(m.ChannelID, "Invite me with this link: <https://oengus.fun/bot>")
+        break
+    case "o!discord":
+        s.ChannelMessageSend(m.ChannelID, "You can join the Oengus discord by clicking this link: <https://oengus.fun/discord>")
         break
     }
 }
