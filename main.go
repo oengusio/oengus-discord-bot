@@ -2,6 +2,7 @@ package main
 
 import (
     "fmt"
+    "log"
     "os"
     "os/signal"
     "strings"
@@ -10,12 +11,106 @@ import (
     "github.com/bwmarrin/discordgo"
 )
 
-var botToken = os.Getenv("BOT_TOKEN")
+var (
+    CommandGuildId = getEnv("COMMAND_GUILD_ID", "")
+    BotToken       = os.Getenv("BOT_TOKEN")
+    RemoveCommands = getEnv("REMOVE_COMMANDS_ON_EXIT", "false")
+    UpdateCommands = getEnv("UPDATE_SLASH_COMMANDS", "false")
+
+    commands = []*discordgo.ApplicationCommand{
+        {
+            Name: "stats",
+            Description: "Shows some statistics about the bot",
+        },
+        {
+            Name: "invite",
+            Description: "Shows the link to invite the bot",
+        },
+        {
+            Name: "discord",
+            Description: "Shows the link to the oengus discord",
+        },
+        {
+            Name: "marathonstats",
+            Description: "Shows statistics about a marathon",
+            Options: []*discordgo.ApplicationCommandOption{
+              {
+                  Type:        discordgo.ApplicationCommandOptionString,
+                  Name:        "marathon",
+                  Description: "The id of a marathon",
+                  Required:    true,
+              },
+            },
+        },
+    }
+
+    commandHandlers = map[string]func(s *discordgo.Session, i *discordgo.InteractionCreate){
+        "stats": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+            s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+                Type: discordgo.InteractionResponseChannelMessageWithSource,
+                Data: &discordgo.InteractionResponseData{
+                    // Flags:
+                    // Content: "Hey there! Congratulations, you just executed your first slash command",
+                    Embeds: []*discordgo.MessageEmbed{
+                        {
+                            Fields: []*discordgo.MessageEmbedField{
+                                {
+                                    Name: "Bot stats",
+                                    Value: fmt.Sprintf(
+                                        "**Guilds (cached)**: %d",
+                                        len(s.State.Guilds),
+                                    ),
+                                },
+                                {
+                                    Name: "Yearly marathon stats",
+                                    Value: "**Marathons in 2018**: 2\n**Marathons in 2019**: 14\n**Marathons in 2020**: 159",
+                                },
+                            },
+                        },
+                    },
+                },
+            })
+        },
+        "invite": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+            s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+                Type: discordgo.InteractionResponseChannelMessageWithSource,
+                Data: &discordgo.InteractionResponseData{
+                    // Flags:
+                    Content: "Invite me with this link: <https://oengus.fun/bot>",
+                },
+            })
+        },
+        "discord": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+            s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+                Type: discordgo.InteractionResponseChannelMessageWithSource,
+                Data: &discordgo.InteractionResponseData{
+                    // Flags:
+                    Content: "You can join the Oengus discord by clicking this link: <https://oengus.fun/discord>",
+                },
+            })
+        },
+        "marathonstats": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+            s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+                Type: discordgo.InteractionResponseChannelMessageWithSource,
+                Data: &discordgo.InteractionResponseData{
+                    Flags: 1 << 6,
+                    Content: "WIP",
+                },
+            })
+        },
+    }
+)
+
+func getEnv(key, fallback string) string {
+    if value, ok := os.LookupEnv(key); ok {
+        return value
+    }
+    return fallback
+}
 
 func main() {
-
     // Create a new Discord session using the provided bot token.
-    dg, err := discordgo.New("Bot " + botToken)
+    dg, err := discordgo.New("Bot " + BotToken)
     if err != nil {
         fmt.Println("error creating Discord session,", err)
         return
@@ -33,6 +128,12 @@ func main() {
     dg.AddHandler(ready)
     dg.AddHandler(messageCreate)
 
+    dg.AddHandler(func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+        if h, ok := commandHandlers[i.ApplicationCommandData().Name]; ok {
+            h(s, i)
+        }
+    })
+
     // In this example, we only care about receiving message events.
     dg.Identify.Intents = discordgo.MakeIntent(discordgo.IntentsGuildMembers | discordgo.IntentsGuildMessages)
 
@@ -43,14 +144,40 @@ func main() {
         return
     }
 
+    if RemoveCommands == "true" {
+        _, err := dg.ApplicationCommandBulkOverwrite(
+            dg.State.User.ID,
+            CommandGuildId,
+            []*discordgo.ApplicationCommand{},
+        )
+
+        if err != nil {
+            fmt.Println("Error clearing commands", err)
+            return
+        }
+
+        defer dg.Close()
+        return
+    }
+
+    if UpdateCommands == "true" {
+        for _, v := range commands {
+            _, err := dg.ApplicationCommandCreate(dg.State.User.ID, CommandGuildId, v)
+            if err != nil {
+                log.Panicf("Cannot create '%v' command: %v", v.Name, err)
+            }
+        }
+    }
+
+    // Cleanly close down the Discord session.
+    defer dg.Close()
+
     // Wait here until CTRL-C or other term signal is received.
     fmt.Println("Bot is now running.  Press CTRL-C to exit.")
     sc := make(chan os.Signal, 1)
     signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt, os.Kill)
     <-sc
-
-    // Cleanly close down the Discord session.
-    dg.Close()
+    fmt.Println("Gracefully shutting down")
 }
 
 func ready(s *discordgo.Session, event *discordgo.Ready) {
@@ -60,8 +187,8 @@ func ready(s *discordgo.Session, event *discordgo.Ready) {
 
     usd.Activities = []*discordgo.Activity{
         {
-            Name: "o!help",
-            Type: 2, // Listening to
+            Name: "your marathon",
+            Type: 3, // Watching
             URL:  "",
         },
     }

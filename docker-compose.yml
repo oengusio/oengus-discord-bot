@@ -6,3 +6,5 @@ services:
       context: .
     environment:
       - BOT_TOKEN=
+      - COMMAND_GUILD_ID=
+      - REMOVE_COMMANDS_ON_EXIT=false
