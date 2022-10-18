@@ -3,8 +3,15 @@ package main
 var esaDiscord = "85369684286767104"
 var esaRunnerRole = "1015153036064202772"
 
+// BSG also wants to test
+var bsgDiscord = "153911811232497664"
+var bsgRunnerRole = "630687834688323594"
+
 func assignRoleToRunnersESA() {
 	assignRolesToRunners("ESA-Win23", esaDiscord, esaRunnerRole)
+}
+func assignRoleToRunnersBSG() {
+	assignRolesToRunners("", bsgDiscord, bsgRunnerRole)
 }
 
 func assignRolesToRunners(marathonId string, guildId string, roleId string) {
