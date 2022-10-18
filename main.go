@@ -99,6 +99,8 @@ var (
 				},
 			})
 		},
+		// TODO: remove runner roles
+		//  - A command that has a role as input and removes it from all members
 	}
 )
 
