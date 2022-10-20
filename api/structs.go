@@ -7,6 +7,10 @@ type MarathonStats struct {
 	AverageEstimate string `json:"averageEstimate"`
 }
 
+type MarathonSettings struct {
+	Discord MarathonDiscordSettings `json:"discord_settings"`
+}
+
 type MarathonDiscordSettings struct {
 	GuildId                string `json:"guild_id"`
 	RunnerRoleId           string `json:"runner_role_id"`
@@ -31,9 +35,17 @@ type SubmissionResponse struct {
 }
 
 type Submission struct {
-	Id    int      `json:"id"`
-	User  string   `json:"user"`
-	Games []string `json:"games"`
+	Id    int    `json:"id"`
+	User  User   `json:"user"`
+	Games []Game `json:"games"`
+}
+
+type Game struct {
+	Id         int `json:"id"`
+	Categories []struct {
+		Id     int    `json:"id"`
+		Status string `json:"status"`
+	} `json:"categories"`
 }
 
 // NOTE: we're only storing the most important bits
