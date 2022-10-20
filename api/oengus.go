@@ -1,20 +1,26 @@
 package api
 
-type MarathonStats struct {
-	SubmissionCount int    `json:"submissionCount"`
-	RunnerCount     int    `json:"runnerCount"`
-	TotalLength     string `json:"totalLength"`
-	AverageEstimate string `json:"averageEstimate"`
-}
+import "net/http"
 
-type MarathonDiscordSettings struct {
-	GuildId                string `json:"guild_id"`
-	RunnerRoleId           string `json:"runner_role_id"`
-	DonationChannel        string `json:"donation_channel"`
-	SubmissionChannel      string `json:"submission_channel"`
-	SubmissionAuditChannel string `json:"submission_audit_channel"`
-}
+var httpClient = http.DefaultClient
 
-func getMarathonStats(marathonId string) MarathonStats {
+//var baseUrl = "https://oengus.io/api/v1"
+var baseUrl = "https://oengus.dev/api/v1"
+
+func GetMarathonStats(marathonId string) MarathonStats {
 	return MarathonStats{} // TODO
+}
+
+// 1. load all submissions
+// 2. load statuses
+// TODO: make sure user gets a warning when selection is not published
+
+func FetchAcceptedRunners(marathonId string) {}
+
+func _fetchStatuses(marathonId string, statuses string) {
+	//
+}
+
+func _fetchNextSubmissionPage(marathonId string, page int) {
+	//
 }

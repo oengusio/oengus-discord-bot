@@ -31,6 +31,22 @@ var (
 			Description: "Shows the link to the oengus discord",
 		},
 		{
+			Name:        "remove-runner-roles",
+			Description: "Removes the role assigned to your runners",
+			Options: []*discordgo.ApplicationCommandOption{
+				{
+					Type:        discordgo.ApplicationCommandOptionString,
+					Name:        "marathon",
+					Description: "The id of a marathon to fetch the runner role for",
+					Required:    true,
+				},
+			},
+		},
+		{
+			Name:        "test",
+			Description: "test command",
+		},
+		{
 			Name:        "marathonstats",
 			Description: "Shows statistics about a marathon",
 			Options: []*discordgo.ApplicationCommandOption{
@@ -99,6 +115,16 @@ var (
 				},
 			})
 		},
+		"test": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+			assignRoleToRunnersESA(s)
+			s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					// Flags:
+					Content: "check console",
+				},
+			})
+		},
 		// TODO: remove runner roles
 		//  - A command that has a role as input and removes it from all members
 	}
@@ -123,22 +149,27 @@ func main() {
 	dg.State.MaxMessageCount = 0
 	dg.State.TrackChannels = false
 	dg.State.TrackEmojis = false
-	dg.State.TrackMembers = false
-	dg.State.TrackRoles = false
+	dg.State.TrackMembers = true
+	dg.State.TrackRoles = true
 	dg.State.TrackVoice = false
 	dg.State.TrackPresences = false
 
 	dg.AddHandler(ready)
-	dg.AddHandler(messageCreate)
+	dg.AddHandler(messageCreate) // TODO: remove
+
+	oengusDiscord := "601082577729880092"
 
 	dg.AddHandler(func(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		if h, ok := commandHandlers[i.ApplicationCommandData().Name]; ok {
-			h(s, i)
+			// TODO: temp for testing
+			if i.GuildID == EsaDiscord || i.GuildID == BsgDiscord || i.GuildID == oengusDiscord {
+				h(s, i)
+			}
 		}
 	})
 
 	// In this example, we only care about receiving message events.
-	dg.Identify.Intents = discordgo.MakeIntent(discordgo.IntentsGuildMembers | discordgo.IntentsGuildMessages)
+	dg.Identify.Intents = discordgo.MakeIntent(discordgo.IntentsGuildMembers)
 
 	// Open a websocket connection to Discord and begin listening.
 	err = dg.Open()
