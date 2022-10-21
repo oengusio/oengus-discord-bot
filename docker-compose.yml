@@ -8,3 +8,4 @@ services:
       - BOT_TOKEN=
       - COMMAND_GUILD_ID=
       - REMOVE_COMMANDS_ON_EXIT=false
+      - DATABASE_URI=jdbc:postgresql://postgres@localhost:5432/oengus
