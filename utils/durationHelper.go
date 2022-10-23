@@ -1,13 +1,13 @@
-package main
+package utils
 
 // Source https://gist.github.com/spatialtime/2a54a6dbf80121997b2459b2d3b9b380
 
 import (
-    "errors"
-    "regexp"
-    "strconv"
-    "strings"
-    "time"
+	"errors"
+	"regexp"
+	"strconv"
+	"strings"
+	"time"
 )
 
 func ParseAndMakeDurationPretty(duration string) string {

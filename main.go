@@ -3,10 +3,9 @@ package main
 import (
 	"fmt"
 	"log"
-	"oenugs-bot/api"
+	"oenugs-bot/slashHandlers"
 	"os"
 	"os/signal"
-	"strconv"
 	"strings"
 	"syscall"
 
@@ -14,7 +13,6 @@ import (
 )
 
 var (
-	OengusBotId    = "559625844197163008"
 	CommandGuildId = getEnv("COMMAND_GUILD_ID", "")
 	BotToken       = os.Getenv("BOT_TOKEN")
 	RemoveCommands = getEnv("REMOVE_COMMANDS_ON_EXIT", "false")
@@ -108,55 +106,7 @@ var (
 				},
 			})
 		},
-		"marathonstats": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-			// https://oengus.io/api/marathons/{marathon}/stats
-			s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					//Flags:   1 << 6,
-					Content: "Loading...",
-				},
-			})
-
-			go func() {
-				marathonId := i.ApplicationCommandData().Options[0].StringValue()
-				stats, err := api.GetMarathonStats(marathonId)
-
-				if err != nil {
-					s.InteractionResponseEdit(OengusBotId, i.Interaction, &discordgo.WebhookEdit{
-						Content: err.Error(),
-					})
-					return
-				}
-
-				s.InteractionResponseEdit(OengusBotId, i.Interaction, &discordgo.WebhookEdit{
-					Content: " ",
-					Embeds: []*discordgo.MessageEmbed{
-						{
-							Title: fmt.Sprintf("Submission Stats for **%s**", marathonId),
-							Fields: []*discordgo.MessageEmbedField{
-								{
-									Name:  "Total Submissions",
-									Value: strconv.Itoa(stats.SubmissionCount),
-								},
-								{
-									Name:  "Total Runners",
-									Value: strconv.Itoa(stats.RunnerCount),
-								},
-								{
-									Name:  "Total Length",
-									Value: ParseAndMakeDurationPretty(stats.TotalLength),
-								},
-								{
-									Name:  "Average Estimate",
-									Value: ParseAndMakeDurationPretty(stats.AverageEstimate),
-								},
-							},
-						},
-					},
-				})
-			}()
-		},
+		"marathonstats": slashHandlers.MarathonStats,
 		"remove-runner-roles": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
 			marathonId := i.ApplicationCommandData().Options[0].StringValue()
 
