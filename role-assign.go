@@ -26,7 +26,7 @@ func assignRoleToRunnersESA(s *discordgo.Session, i *discordgo.InteractionCreate
 	assignRolesToRunners(s, EsaMarathonId, EsaDiscord, esaRunnerRole)
 
 	go func() {
-		ids, _ := api.GetAcceptedRunnerDiscordIds("poggers")
+		ids, _ := api.GetAcceptedRunnerDiscordIds(EsaMarathonId)
 
 		for _, id := range ids {
 			fakeUser := discordgo.User{
@@ -63,7 +63,7 @@ func assignRolesToRunners(s *discordgo.Session, marathonId string, guildId strin
 }
 
 func startRoleAssignment(s *discordgo.Session, marathonId, guildId, roleId string) {
-	userIDs, err := api.GetAcceptedRunnerDiscordIds("poggers")
+	userIDs, err := api.GetAcceptedRunnerDiscordIds(marathonId)
 
 	if err != nil {
 		fmt.Println("Failed to load users for marathon", marathonId, err)

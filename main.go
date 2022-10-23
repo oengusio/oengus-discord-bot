@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"oenugs-bot/slashHandlers"
+	"oenugs-bot/utils"
 	"os"
 	"os/signal"
 	"syscall"
@@ -13,10 +14,11 @@ import (
 
 var (
 	oengusDiscord  = "601082577729880092"
-	CommandGuildId = getEnv("COMMAND_GUILD_ID", "")
+	DuncteId       = "191231307290771456"
+	CommandGuildId = utils.GetEnv("COMMAND_GUILD_ID", "")
 	BotToken       = os.Getenv("BOT_TOKEN")
-	RemoveCommands = getEnv("REMOVE_COMMANDS_ON_EXIT", "false")
-	UpdateCommands = getEnv("UPDATE_SLASH_COMMANDS", "false")
+	RemoveCommands = utils.GetEnv("REMOVE_COMMANDS_ON_EXIT", "false")
+	UpdateCommands = utils.GetEnv("UPDATE_SLASH_COMMANDS", "false")
 
 	commands = []*discordgo.ApplicationCommand{
 		{
@@ -44,8 +46,8 @@ var (
 			},
 		},
 		{
-			Name:        "test",
-			Description: "test command",
+			Name:        "esa-role-assign-test",
+			Description: "Role assign test, will not respond to you",
 		},
 		{
 			Name:        "marathonstats",
@@ -67,7 +69,11 @@ var (
 		"discord":       slashHandlers.DiscordInvite,
 		"marathonstats": slashHandlers.MarathonStats,
 		"remove-runner-roles": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-			if i.GuildID != oengusDiscord {
+			if i.Member == nil {
+				return
+			}
+
+			if i.GuildID != oengusDiscord && i.Member.User.ID != DuncteId {
 				return
 			}
 
@@ -83,8 +89,12 @@ var (
 
 			removeRoleFromRunners(s, EsaMarathonId, EsaDiscord, esaRunnerRole)
 		},
-		"test": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-			if i.GuildID != oengusDiscord {
+		"esa-role-assign-test": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+			if i.Member == nil {
+				return
+			}
+
+			if i.GuildID != oengusDiscord && i.Member.User.ID != DuncteId {
 				return
 			}
 
@@ -101,13 +111,6 @@ var (
 		//  - A command that has a role as input and removes it from all members
 	}
 )
-
-func getEnv(key, fallback string) string {
-	if value, ok := os.LookupEnv(key); ok {
-		return value
-	}
-	return fallback
-}
 
 func main() {
 	// Create a new Discord session using the provided bot token.

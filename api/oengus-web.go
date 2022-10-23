@@ -7,12 +7,12 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"oenugs-bot/utils"
 )
 
 var httpClient = http.DefaultClient
 
-//var baseUrl = "https://oengus.io/api/v1"
-var baseUrl = "https://oengus.dev/api/v1"
+var baseUrl = utils.GetEnv("OENGUS_API_BASE", "https://oengus.io/api/v1")
 
 func GetMarathonStats(marathonId string) (*MarathonStats, error) {
 	url := fmt.Sprintf("%s/marathons/%s/stats", baseUrl, marathonId)

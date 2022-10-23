@@ -10,3 +10,4 @@ services:
       - COMMAND_GUILD_ID=
       - REMOVE_COMMANDS_ON_EXIT=false
       - DATABASE_URI=postgresql://postgres@localhost:5432/oengus
+      - OENGUS_API_BASE=
