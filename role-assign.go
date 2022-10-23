@@ -8,6 +8,9 @@ import (
 
 var EsaDiscord = "85369684286767104"
 var esaRunnerRole = "1015153036064202772"
+var EsaMarathonId = "ESA-Win23"
+
+//var EsaMarathonId = "poggers" // test marathon local
 
 // BSG also wants to test
 var BsgDiscord = "153911811232497664"
@@ -20,8 +23,7 @@ var guildMembersPageLimit = 1000
 // TODO: binary search the shit out of this
 
 func assignRoleToRunnersESA(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	//assignRolesToRunners(s, "ESA-Win23", EsaDiscord, esaRunnerRole)
-	assignRolesToRunners(s, "poggers", EsaDiscord, esaRunnerRole)
+	assignRolesToRunners(s, EsaMarathonId, EsaDiscord, esaRunnerRole)
 
 	go func() {
 		ids, _ := api.GetAcceptedRunnerDiscordIds("poggers")

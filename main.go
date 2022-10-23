@@ -71,17 +71,17 @@ var (
 				return
 			}
 
-			marathonId := i.ApplicationCommandData().Options[0].StringValue()
+			//marathonId := i.ApplicationCommandData().Options[0].StringValue()
 
 			s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 				Type: discordgo.InteractionResponseChannelMessageWithSource,
 				Data: &discordgo.InteractionResponseData{
 					// Flags:
-					Content: fmt.Sprintf("Removing role set in marathon `%s` from users", marathonId),
+					Content: fmt.Sprintf("Removing role set in marathon `%s` from users", EsaMarathonId),
 				},
 			})
 
-			removeRoleFromRunners(s, "caching", EsaDiscord, esaRunnerRole)
+			removeRoleFromRunners(s, EsaMarathonId, EsaDiscord, esaRunnerRole)
 		},
 		"test": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
 			if i.GuildID != oengusDiscord {
