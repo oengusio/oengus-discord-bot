@@ -6,7 +6,6 @@ import (
 	"oenugs-bot/slashHandlers"
 	"os"
 	"os/signal"
-	"strings"
 	"syscall"
 
 	"github.com/bwmarrin/discordgo"
@@ -129,7 +128,6 @@ func main() {
 	dg.State.TrackPresences = false
 
 	dg.AddHandler(ready)
-	dg.AddHandler(messageCreate) // TODO: remove
 
 	dg.AddHandler(func(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		if h, ok := commandHandlers[i.ApplicationCommandData().Name]; ok {
@@ -199,41 +197,4 @@ func ready(s *discordgo.Session, event *discordgo.Ready) {
 	s.UpdateStatusComplex(*usd)
 
 	fmt.Println("Bot is ready!")
-}
-
-// This function will be called (due to AddHandler above) every time a new
-// message is created on any channel that the authenticated bot has access to.
-func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
-	// Ignore all messages created by bots
-	if m.Author.Bot || m.Author.System {
-		return
-	}
-
-	// TODO: slash commands
-	switch strings.ToLower(m.Content) {
-	case "<@559625844197163008>", "<@!559625844197163008>":
-		s.ChannelMessageSend(m.ChannelID, "My commands can be viewed with `o!help`")
-		break
-	case "o!help":
-		s.ChannelMessageSend(m.ChannelID, "Current command list:\n"+
-			"`o!invite`: Get an invite link for the bot\n"+
-			"`o!discord`: Gives the invite to the oengus discord server.\n"+
-			"`o!stats`: Show some some dev stats")
-		break
-	case "o!invite":
-		s.ChannelMessageSend(m.ChannelID, "Invite me with this link: <https://oengus.fun/bot>")
-		break
-	case "o!discord":
-		s.ChannelMessageSend(m.ChannelID, "You can join the Oengus discord by clicking this link: <https://oengus.fun/discord>")
-		break
-	case "o!stats":
-		s.ChannelMessageSendEmbed(m.ChannelID, &discordgo.MessageEmbed{
-			Title: "Oengus bot stats (WIP)",
-			Description: fmt.Sprintf(
-				"**Guilds (cached)**: %d",
-				len(s.State.Guilds),
-			),
-		})
-		break
-	}
 }
