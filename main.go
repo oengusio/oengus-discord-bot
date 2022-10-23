@@ -13,6 +13,7 @@ import (
 )
 
 var (
+	oengusDiscord  = "601082577729880092"
 	CommandGuildId = getEnv("COMMAND_GUILD_ID", "")
 	BotToken       = os.Getenv("BOT_TOKEN")
 	RemoveCommands = getEnv("REMOVE_COMMANDS_ON_EXIT", "false")
@@ -62,52 +63,15 @@ var (
 	}
 
 	commandHandlers = map[string]func(s *discordgo.Session, i *discordgo.InteractionCreate){
-		"stats": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-			s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					// Flags:
-					// Content: "Hey there! Congratulations, you just executed your first slash command",
-					Embeds: []*discordgo.MessageEmbed{
-						{
-							Fields: []*discordgo.MessageEmbedField{
-								{
-									Name: "Bot stats",
-									Value: fmt.Sprintf(
-										"**Guilds (cached)**: %d",
-										len(s.State.Guilds),
-									),
-								},
-								{
-									Name:  "Yearly marathon stats",
-									Value: "**Marathons in 2018**: 2\n**Marathons in 2019**: 14\n**Marathons in 2020**: 159\n**Marathons in 2021**: 247",
-								},
-							},
-						},
-					},
-				},
-			})
-		},
-		"invite": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-			s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					// Flags:
-					Content: "Invite me with this link: <https://oengus.fun/bot>",
-				},
-			})
-		},
-		"discord": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-			s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					// Flags:
-					Content: "You can join the Oengus discord by clicking this link: <https://oengus.fun/discord>",
-				},
-			})
-		},
+		"stats":         slashHandlers.OengusStats,
+		"invite":        slashHandlers.BotInvite,
+		"discord":       slashHandlers.DiscordInvite,
 		"marathonstats": slashHandlers.MarathonStats,
 		"remove-runner-roles": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+			if i.GuildID != oengusDiscord {
+				return
+			}
+
 			marathonId := i.ApplicationCommandData().Options[0].StringValue()
 
 			s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
@@ -121,6 +85,10 @@ var (
 			removeRoleFromRunners(s, "caching", EsaDiscord, esaRunnerRole)
 		},
 		"test": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+			if i.GuildID != oengusDiscord {
+				return
+			}
+
 			assignRoleToRunnersESA(s, i)
 			s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 				Type: discordgo.InteractionResponseChannelMessageWithSource,
@@ -163,14 +131,10 @@ func main() {
 	dg.AddHandler(ready)
 	dg.AddHandler(messageCreate) // TODO: remove
 
-	oengusDiscord := "601082577729880092"
-
 	dg.AddHandler(func(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		if h, ok := commandHandlers[i.ApplicationCommandData().Name]; ok {
 			// TODO: temp for testing
-			if i.GuildID == EsaDiscord || i.GuildID == BsgDiscord || i.GuildID == oengusDiscord {
-				h(s, i)
-			}
+			h(s, i)
 		}
 	})
 
