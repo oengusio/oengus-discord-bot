@@ -20,7 +20,9 @@ var botTestingChannel = "798952970892214272"
 
 var guildMembersPageLimit = 1000
 
-// TODO: binary search the shit out of this
+// TODO:
+//  1. test that role exists
+//  2. Test that bot is in server
 
 func assignRoleToRunnersESA(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	assignRolesToRunners(s, EsaMarathonId, EsaDiscord, esaRunnerRole)
@@ -56,8 +58,8 @@ func assignRolesToRunners(s *discordgo.Session, marathonId string, guildId strin
 	//  1. Fetch marathon settings (already done before this func)
 	//  2. Fetch submissions with status: VALIDATED, BACKUP, BONUS
 	//  3. Assign role
-	//  4. log feedback (audit channel??) about runners that could not be assigned a role with reason (no perms or no discord id)
-	//      - what channel to log in when audit log is not set? (use command??)
+	//  4. log feedback about runners that could not be assigned a role with reason (no perms or no discord id)
+	//      - Will be activated via command
 
 	go startRoleAssignment(s, marathonId, guildId, roleId)
 }

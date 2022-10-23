@@ -134,7 +134,6 @@ func main() {
 
 	dg.AddHandler(func(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		if h, ok := commandHandlers[i.ApplicationCommandData().Name]; ok {
-			// TODO: temp for testing
 			h(s, i)
 		}
 	})
