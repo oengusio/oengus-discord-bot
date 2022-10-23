@@ -62,6 +62,8 @@ func GetAcceptedRunnerDiscordIds(marathonId string) ([]string, error) {
         finalDiscordIds = append(finalDiscordIds, discordIdTmp)
     }
 
+    // TODO: remove dupes
+
     return finalDiscordIds, nil
 }
 
