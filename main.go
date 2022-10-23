@@ -3,19 +3,22 @@ package main
 import (
 	"fmt"
 	"log"
+	"oenugs-bot/slashHandlers"
+	"oenugs-bot/utils"
 	"os"
 	"os/signal"
-	"strings"
 	"syscall"
 
 	"github.com/bwmarrin/discordgo"
 )
 
 var (
-	CommandGuildId = getEnv("COMMAND_GUILD_ID", "")
+	oengusDiscord  = "601082577729880092"
+	DuncteId       = "191231307290771456"
+	CommandGuildId = utils.GetEnv("COMMAND_GUILD_ID", "")
 	BotToken       = os.Getenv("BOT_TOKEN")
-	RemoveCommands = getEnv("REMOVE_COMMANDS_ON_EXIT", "false")
-	UpdateCommands = getEnv("UPDATE_SLASH_COMMANDS", "false")
+	RemoveCommands = utils.GetEnv("REMOVE_COMMANDS_ON_EXIT", "false")
+	UpdateCommands = utils.GetEnv("UPDATE_SLASH_COMMANDS", "false")
 
 	commands = []*discordgo.ApplicationCommand{
 		{
@@ -29,6 +32,22 @@ var (
 		{
 			Name:        "discord",
 			Description: "Shows the link to the oengus discord",
+		},
+		{
+			Name:        "remove-runner-roles",
+			Description: "Removes the role assigned to your runners",
+			Options: []*discordgo.ApplicationCommandOption{
+				{
+					Type:        discordgo.ApplicationCommandOptionString,
+					Name:        "marathon",
+					Description: "The id of a marathon to fetch the runner role for",
+					Required:    true,
+				},
+			},
+		},
+		{
+			Name:        "esa-role-assign-test",
+			Description: "Role assign test, will not respond to you",
 		},
 		{
 			Name:        "marathonstats",
@@ -45,69 +64,53 @@ var (
 	}
 
 	commandHandlers = map[string]func(s *discordgo.Session, i *discordgo.InteractionCreate){
-		"stats": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+		"stats":         slashHandlers.OengusStats,
+		"invite":        slashHandlers.BotInvite,
+		"discord":       slashHandlers.DiscordInvite,
+		"marathonstats": slashHandlers.MarathonStats,
+		"remove-runner-roles": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+			if i.Member == nil {
+				return
+			}
+
+			if i.GuildID != oengusDiscord && i.Member.User.ID != DuncteId {
+				return
+			}
+
+			//marathonId := i.ApplicationCommandData().Options[0].StringValue()
+
 			s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 				Type: discordgo.InteractionResponseChannelMessageWithSource,
 				Data: &discordgo.InteractionResponseData{
 					// Flags:
-					// Content: "Hey there! Congratulations, you just executed your first slash command",
-					Embeds: []*discordgo.MessageEmbed{
-						{
-							Fields: []*discordgo.MessageEmbedField{
-								{
-									Name: "Bot stats",
-									Value: fmt.Sprintf(
-										"**Guilds (cached)**: %d",
-										len(s.State.Guilds),
-									),
-								},
-								{
-									Name:  "Yearly marathon stats",
-									Value: "**Marathons in 2018**: 2\n**Marathons in 2019**: 14\n**Marathons in 2020**: 159\n**Marathons in 2021**: 247",
-								},
-							},
-						},
-					},
+					Content: fmt.Sprintf("Removing role set in marathon `%s` from users", EsaMarathonId),
 				},
 			})
+
+			removeRoleFromRunners(s, EsaMarathonId, EsaDiscord, esaRunnerRole)
 		},
-		"invite": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+		"esa-role-assign-test": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+			if i.Member == nil {
+				return
+			}
+
+			if i.GuildID != oengusDiscord && i.Member.User.ID != DuncteId {
+				return
+			}
+
+			assignRoleToRunnersESA(s, i)
 			s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 				Type: discordgo.InteractionResponseChannelMessageWithSource,
 				Data: &discordgo.InteractionResponseData{
 					// Flags:
-					Content: "Invite me with this link: <https://oengus.fun/bot>",
+					Content: "check console",
 				},
 			})
 		},
-		"discord": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-			s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					// Flags:
-					Content: "You can join the Oengus discord by clicking this link: <https://oengus.fun/discord>",
-				},
-			})
-		},
-		"marathonstats": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-			// https://oengus.io/api/marathons/{marathon}/stats
-			s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					Flags:   1 << 6,
-					Content: "WIP",
-				},
-			})
-		},
+		// TODO: remove runner roles
+		//  - A command that has a role as input and removes it from all members
 	}
 )
-
-func getEnv(key, fallback string) string {
-	if value, ok := os.LookupEnv(key); ok {
-		return value
-	}
-	return fallback
-}
 
 func main() {
 	// Create a new Discord session using the provided bot token.
@@ -118,16 +121,16 @@ func main() {
 	}
 
 	// configure the tracking of the state
+	dg.StateEnabled = true
 	dg.State.MaxMessageCount = 0
 	dg.State.TrackChannels = false
 	dg.State.TrackEmojis = false
-	dg.State.TrackMembers = false
-	dg.State.TrackRoles = false
+	dg.State.TrackMembers = true
+	dg.State.TrackRoles = true
 	dg.State.TrackVoice = false
 	dg.State.TrackPresences = false
 
 	dg.AddHandler(ready)
-	dg.AddHandler(messageCreate)
 
 	dg.AddHandler(func(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		if h, ok := commandHandlers[i.ApplicationCommandData().Name]; ok {
@@ -135,8 +138,7 @@ func main() {
 		}
 	})
 
-	// In this example, we only care about receiving message events.
-	dg.Identify.Intents = discordgo.MakeIntent(discordgo.IntentsGuildMembers | discordgo.IntentsGuildMessages)
+	dg.Identify.Intents = discordgo.IntentsGuilds | discordgo.IntentsGuildMembers
 
 	// Open a websocket connection to Discord and begin listening.
 	err = dg.Open()
@@ -195,41 +197,6 @@ func ready(s *discordgo.Session, event *discordgo.Ready) {
 	}
 
 	s.UpdateStatusComplex(*usd)
-}
 
-// This function will be called (due to AddHandler above) every time a new
-// message is created on any channel that the authenticated bot has access to.
-func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
-	// Ignore all messages created by bots
-	if m.Author.Bot || m.Author.System {
-		return
-	}
-
-	// TODO: slash commands
-	switch strings.ToLower(m.Content) {
-	case "<@559625844197163008>", "<@!559625844197163008>":
-		s.ChannelMessageSend(m.ChannelID, "My commands can be viewed with `o!help`")
-		break
-	case "o!help":
-		s.ChannelMessageSend(m.ChannelID, "Current command list:\n"+
-			"`o!invite`: Get an invite link for the bot\n"+
-			"`o!discord`: Gives the invite to the oengus discord server.\n"+
-			"`o!stats`: Show some some dev stats")
-		break
-	case "o!invite":
-		s.ChannelMessageSend(m.ChannelID, "Invite me with this link: <https://oengus.fun/bot>")
-		break
-	case "o!discord":
-		s.ChannelMessageSend(m.ChannelID, "You can join the Oengus discord by clicking this link: <https://oengus.fun/discord>")
-		break
-	case "o!stats":
-		s.ChannelMessageSendEmbed(m.ChannelID, &discordgo.MessageEmbed{
-			Title: "Oengus bot stats (WIP)",
-			Description: fmt.Sprintf(
-				"**Guilds (cached)**: %d",
-				len(s.State.Guilds),
-			),
-		})
-		break
-	}
+	fmt.Println("Bot is ready!")
 }
