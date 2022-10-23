@@ -1,11 +1,12 @@
-version: "3.7"
+version: "3.8"
 services:
   oengus_bot:
     container_name: oengus-discord-bot
     build:
       context: .
+    network_mode: host
     environment:
       - BOT_TOKEN=
       - COMMAND_GUILD_ID=
       - REMOVE_COMMANDS_ON_EXIT=false
-      - DATABASE_URI=jdbc:postgresql://postgres@localhost:5432/oengus
+      - DATABASE_URI=postgresql://postgres@localhost:5432/oengus
