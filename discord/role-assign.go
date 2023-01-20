@@ -1,4 +1,4 @@
-package main
+package discord
 
 import (
 	"fmt"
@@ -7,52 +7,44 @@ import (
 	"oenugs-bot/api"
 )
 
-var EsaDiscord = "85369684286767104"
-var esaRunnerRole = "1015153036064202772"
-var EsaMarathonId = "ESA-Win23"
-
-//var EsaMarathonId = "poggers" // test marathon local
-
-// BSG also wants to test
-var BsgDiscord = "153911811232497664"
-var bsgRunnerRole = "630687834688323594"
-
-var botTestingChannel = "798952970892214272"
-
 var guildMembersPageLimit = 1000
 
 // TODO:
 //  1. test that role exists
 //  2. Test that bot is in server
+//  3. Send updates when members are not in the server/assignment failed
 
 func AssignRoleToRunners(s *discordgo.Session, i *discordgo.InteractionCreate, marathonId, guildId, roleId string) {
-	assignRolesToRunners(s, marathonId, guildId, roleId)
+	assignRolesToRunners(s, i, marathonId, guildId, roleId)
 }
 
-func assignRoleToRunnersESA(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	assignRolesToRunners(s, EsaMarathonId, EsaDiscord, esaRunnerRole)
-
+func RemoveRolesFromRunners(s *discordgo.Session, i *discordgo.InteractionCreate, marathonId, guildId, roleId string) {
 	go func() {
-		ids, _ := api.GetAcceptedRunnerDiscordIds(EsaMarathonId)
+		selectionDone, err := api.GetMarathonSelectionDone(marathonId)
 
-		for _, id := range ids {
-			fakeUser := discordgo.User{
-				ID: id,
-			}
-
-			s.ChannelMessageSend(i.ChannelID, fakeUser.Mention())
+		if err != nil {
+			s.FollowupMessageCreate(i.Interaction, false, &discordgo.WebhookParams{
+				Content: "Error: " + err.Error(),
+			})
+			return
 		}
+
+		if !selectionDone {
+			s.FollowupMessageCreate(i.Interaction, false, &discordgo.WebhookParams{
+				Content: "Marathon has not completed selection yet???",
+			})
+			return
+		}
+
+		removeRoleFromRunners(s, marathonId, guildId, roleId)
 	}()
-}
-func assignRoleToRunnersBSG(s *discordgo.Session) {
-	assignRolesToRunners(s, "", BsgDiscord, bsgRunnerRole)
 }
 
 func memberHasRole(member *discordgo.Member, roleId string) bool {
 	return slices.Contains(member.Roles, roleId)
 }
 
-func assignRolesToRunners(s *discordgo.Session, marathonId string, guildId string, roleId string) {
+func assignRolesToRunners(s *discordgo.Session, i *discordgo.InteractionCreate, marathonId string, guildId string, roleId string) {
 	// TODO
 	//  1. Fetch marathon settings (already done before this func)
 	//  2. Fetch submissions with status: VALIDATED, BACKUP, BONUS
@@ -60,7 +52,25 @@ func assignRolesToRunners(s *discordgo.Session, marathonId string, guildId strin
 	//  4. log feedback about runners that could not be assigned a role with reason (no perms or no discord id)
 	//      - Will be activated via command
 
-	go startRoleAssignment(s, marathonId, guildId, roleId)
+	go func() {
+		selectionDone, err := api.GetMarathonSelectionDone(marathonId)
+
+		if err != nil {
+			s.FollowupMessageCreate(i.Interaction, false, &discordgo.WebhookParams{
+				Content: "Error: " + err.Error(),
+			})
+			return
+		}
+
+		if !selectionDone {
+			s.FollowupMessageCreate(i.Interaction, false, &discordgo.WebhookParams{
+				Content: "Marathon has not completed selection yet.",
+			})
+			return
+		}
+
+		startRoleAssignment(s, marathonId, guildId, roleId)
+	}()
 }
 
 func startRoleAssignment(s *discordgo.Session, marathonId, guildId, roleId string) {

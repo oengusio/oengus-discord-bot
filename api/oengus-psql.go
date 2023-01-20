@@ -11,6 +11,34 @@ import (
 
 // TODO: https://pkg.go.dev/golang.org/x/exp/slices#Contains
 
+func GetMarathonSelectionDone(marathonId string) (bool, error) {
+	db := getConnection()
+	defer closeConnection(db)
+
+	sql := "SELECT is_selection_done FROM marathon WHERE id = $1"
+
+	rows, err := db.Query(context.Background(), sql, marathonId)
+
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "QueryRow failed: %v\n", err)
+		return false, err
+	}
+
+	var isSelectionDone bool
+
+	if rows.Next() {
+		// Scan is positional, not name based
+		err := rows.Scan(&isSelectionDone)
+
+		if err != nil {
+			fmt.Println("Error scanning rows", err)
+			return false, err
+		}
+	}
+
+	return isSelectionDone, nil
+}
+
 func GetModeratorsForMarathon(marathonId string) ([]string, error) {
 	db := getConnection()
 	defer closeConnection(db)
@@ -38,8 +66,6 @@ func GetModeratorsForMarathon(marathonId string) ([]string, error) {
 
 		discordIdList = append(discordIdList, discordId)
 	}
-
-	fmt.Println(discordIdList)
 
 	return discordIdList, nil
 }
@@ -148,8 +174,6 @@ func getUserIdsForCategoryIds(categoryIds []int, db *pgx.Conn) ([]int, error) {
 	gameSql := fmt.Sprintf("SELECT submission_id FROM game WHERE id IN (%s)", catSql)
 	sql := fmt.Sprintf("SELECT user_id FROM submission WHERE id IN (%s)", gameSql)
 
-	fmt.Println(sql)
-
 	rows, err := db.Query(context.Background(), sql)
 
 	if err != nil {
@@ -163,7 +187,6 @@ func getUserIdsForCategoryIds(categoryIds []int, db *pgx.Conn) ([]int, error) {
 	for rows.Next() {
 		// Scan is positional, not name based
 		err := rows.Scan(&userIdTmp)
-		fmt.Println(userIdTmp)
 
 		if err != nil {
 			fmt.Println("Error scanning row", err)
@@ -188,7 +211,6 @@ func getUserIdsForCategoryIds(categoryIds []int, db *pgx.Conn) ([]int, error) {
 	for rows.Next() {
 		// Scan is positional, not name based
 		err := rows.Scan(&userIdTmp)
-		fmt.Println(userIdTmp)
 
 		if err != nil {
 			fmt.Println("Error scanning row 2", err)
