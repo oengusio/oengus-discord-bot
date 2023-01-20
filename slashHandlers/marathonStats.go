@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/bwmarrin/discordgo"
 	"oenugs-bot/api"
-	"oenugs-bot/globals"
 	"oenugs-bot/utils"
 	"strconv"
 )
@@ -22,8 +21,9 @@ func MarathonStats(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	marathonId := i.ApplicationCommandData().Options[0].StringValue()
 
 	if marathonId == "" {
-		s.InteractionResponseEdit(globals.OengusBotId, i.Interaction, &discordgo.WebhookEdit{
-			Content: "Somehow you did not supply a marathon id??",
+		msg := "Somehow you did not supply a marathon id??"
+		s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
+			Content: &msg,
 		})
 		return
 	}
@@ -32,15 +32,17 @@ func MarathonStats(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		stats, err := api.GetMarathonStats(marathonId)
 
 		if err != nil {
-			s.InteractionResponseEdit(globals.OengusBotId, i.Interaction, &discordgo.WebhookEdit{
-				Content: err.Error(),
+			msg := err.Error()
+			s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
+				Content: &msg,
 			})
 			return
 		}
 
-		s.InteractionResponseEdit(globals.OengusBotId, i.Interaction, &discordgo.WebhookEdit{
-			Content: " ",
-			Embeds: []*discordgo.MessageEmbed{
+		msg := " "
+		s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
+			Content: &msg,
+			Embeds: &[]*discordgo.MessageEmbed{
 				{
 					Title: fmt.Sprintf("Submission Stats for **%s**", marathonId),
 					Fields: []*discordgo.MessageEmbedField{

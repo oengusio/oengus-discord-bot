@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/bwmarrin/discordgo"
+	"golang.org/x/exp/slices"
 	"oenugs-bot/api"
 )
 
@@ -24,6 +25,10 @@ var guildMembersPageLimit = 1000
 //  1. test that role exists
 //  2. Test that bot is in server
 
+func AssignRoleToRunners(s *discordgo.Session, i *discordgo.InteractionCreate, marathonId, guildId, roleId string) {
+	assignRolesToRunners(s, marathonId, guildId, roleId)
+}
+
 func assignRoleToRunnersESA(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	assignRolesToRunners(s, EsaMarathonId, EsaDiscord, esaRunnerRole)
 
@@ -44,13 +49,7 @@ func assignRoleToRunnersBSG(s *discordgo.Session) {
 }
 
 func memberHasRole(member *discordgo.Member, roleId string) bool {
-	for _, mRole := range member.Roles {
-		if mRole == roleId {
-			return true
-		}
-	}
-
-	return false
+	return slices.Contains(member.Roles, roleId)
 }
 
 func assignRolesToRunners(s *discordgo.Session, marathonId string, guildId string, roleId string) {

@@ -33,21 +33,52 @@ var (
 			Name:        "discord",
 			Description: "Shows the link to the oengus discord",
 		},
+		// TODO: Check if discord id of user is in list
 		{
-			Name:        "remove-runner-roles",
-			Description: "Removes the role assigned to your runners",
+			Name:        "role-management",
+			Description: "Allows marathon ***Moderators*** to add and remove",
 			Options: []*discordgo.ApplicationCommandOption{
 				{
-					Type:        discordgo.ApplicationCommandOptionString,
-					Name:        "marathon",
-					Description: "The id of a marathon to fetch the runner role for",
-					Required:    true,
+					Type:        discordgo.ApplicationCommandOptionSubCommand,
+					Name:        "assign",
+					Description: "Assign roles to runners that have their discord linked to oengus",
+					Options: []*discordgo.ApplicationCommandOption{
+						{
+							Type:        discordgo.ApplicationCommandOptionString,
+							Name:        "marathon",
+							Description: "The id of yout marathon",
+							Required:    true,
+						},
+						{
+
+							Type:        discordgo.ApplicationCommandOptionRole,
+							Name:        "role",
+							Description: "The role that the accepted runners need to get",
+							Required:    true,
+						},
+					},
+				},
+				{
+					Type:        discordgo.ApplicationCommandOptionSubCommand,
+					Name:        "remove",
+					Description: "Assign roles to runners that have their discord linked to oengus",
+					Options: []*discordgo.ApplicationCommandOption{
+						{
+							Type:        discordgo.ApplicationCommandOptionString,
+							Name:        "marathon",
+							Description: "The id of yout marathon",
+							Required:    true,
+						},
+						{
+
+							Type:        discordgo.ApplicationCommandOptionRole,
+							Name:        "role",
+							Description: "The role that needs to be removed from the accepted runners",
+							Required:    true,
+						},
+					},
 				},
 			},
-		},
-		{
-			Name:        "esa-role-assign-test",
-			Description: "Role assign test, will not respond to you",
 		},
 		{
 			Name:        "marathonstats",
@@ -82,27 +113,80 @@ var (
 			s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 				Type: discordgo.InteractionResponseChannelMessageWithSource,
 				Data: &discordgo.InteractionResponseData{
-					// Flags:
 					Content: fmt.Sprintf("Removing role set in marathon `%s` from users", EsaMarathonId),
 				},
 			})
 
 			removeRoleFromRunners(s, EsaMarathonId, EsaDiscord, esaRunnerRole)
 		},
-		"esa-role-assign-test": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+		"role-management": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
 			if i.Member == nil {
 				return
+			}
+
+			data := i.ApplicationCommandData()
+
+			// This should not be possible, but just to be safe.
+			if len(data.Options) == 0 {
+				s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+					Type: discordgo.InteractionResponseChannelMessageWithSource,
+					Data: &discordgo.InteractionResponseData{
+						Flags:   discordgo.MessageFlagsEphemeral,
+						Content: "Please choose assign or remove",
+					},
+				})
+				return
+			}
+
+			subCmd := data.Options[0]
+
+			switch subCmd.Name {
+			case "assign":
+				marathonId := subCmd.Options[0].StringValue()
+				role := subCmd.Options[1].RoleValue(s, i.GuildID)
+
+				// TODO: can make this more abstract
+				if role == nil {
+					s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+						Type: discordgo.InteractionResponseChannelMessageWithSource,
+						Data: &discordgo.InteractionResponseData{
+							Flags:   discordgo.MessageFlagsEphemeral,
+							Content: "I could not find the supplied role, does it exist?",
+						},
+					})
+					return
+				}
+
+				AssignRoleToRunners(s, i, marathonId, i.GuildID, role.ID)
+
+				s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+					Type: discordgo.InteractionResponseChannelMessageWithSource,
+					Data: &discordgo.InteractionResponseData{
+						Content: fmt.Sprintf("Marathon id %s, role id: %s", marathonId, role.ID),
+					},
+				})
+				break
+			case "remove":
+				break
+			default:
+				s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+					Type: discordgo.InteractionResponseChannelMessageWithSource,
+					Data: &discordgo.InteractionResponseData{
+						Flags:   discordgo.MessageFlagsEphemeral,
+						Content: "I'm impressed, please report this bug",
+					},
+				})
+				break
 			}
 
 			if i.GuildID != oengusDiscord && i.Member.User.ID != DuncteId {
 				return
 			}
 
-			assignRoleToRunnersESA(s, i)
+			// assignRoleToRunnersESA(s, i)
 			s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 				Type: discordgo.InteractionResponseChannelMessageWithSource,
 				Data: &discordgo.InteractionResponseData{
-					// Flags:
 					Content: "check console",
 				},
 			})
