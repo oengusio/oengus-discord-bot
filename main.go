@@ -45,7 +45,7 @@ var (
 						{
 							Type:        discordgo.ApplicationCommandOptionString,
 							Name:        "marathon",
-							Description: "The id of yout marathon",
+							Description: "The id of your marathon",
 							Required:    true,
 						},
 						{
@@ -65,7 +65,7 @@ var (
 						{
 							Type:        discordgo.ApplicationCommandOptionString,
 							Name:        "marathon",
-							Description: "The id of yout marathon",
+							Description: "The id of your marathon",
 							Required:    true,
 						},
 						{

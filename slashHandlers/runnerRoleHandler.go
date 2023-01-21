@@ -5,6 +5,7 @@ import (
 	"golang.org/x/exp/slices"
 	"oenugs-bot/api"
 	"oenugs-bot/discord"
+	"oenugs-bot/utils"
 )
 
 func HandleRoleManagement(s *discordgo.Session, i *discordgo.InteractionCreate) {
@@ -40,7 +41,9 @@ func HandleRoleManagement(s *discordgo.Session, i *discordgo.InteractionCreate) 
 		return
 	}
 
-	marathonId := subCmd.Options[0].StringValue()
+	// Don't want to rely on the order of the options
+	options := utils.OptionsToMap(subCmd.Options)
+	marathonId := options["marathon"].StringValue()
 	moderators, err := api.GetModeratorsForMarathon(marathonId)
 
 	if err != nil {
@@ -65,22 +68,12 @@ func HandleRoleManagement(s *discordgo.Session, i *discordgo.InteractionCreate) 
 		return
 	}
 
-	role := subCmd.Options[1].RoleValue(s, i.GuildID)
-
-	if role == nil {
-		s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-			Type: discordgo.InteractionResponseChannelMessageWithSource,
-			Data: &discordgo.InteractionResponseData{
-				Flags:   discordgo.MessageFlagsEphemeral,
-				Content: "I could not find the supplied role, does it exist?",
-			},
-		})
-		return
-	}
+	// Never returns null
+	roleId := options["role"].RoleValue(nil, "").ID
 
 	switch subCmd.Name {
 	case "assign":
-		discord.AssignRoleToRunners(s, i, marathonId, i.GuildID, role.ID)
+		discord.AssignRoleToRunners(s, i, marathonId, i.GuildID, roleId)
 
 		s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseChannelMessageWithSource,
@@ -90,7 +83,7 @@ func HandleRoleManagement(s *discordgo.Session, i *discordgo.InteractionCreate) 
 		})
 		break
 	case "remove":
-		discord.RemoveRolesFromRunners(s, i, marathonId, i.GuildID, role.ID)
+		discord.RemoveRolesFromRunners(s, i, marathonId, i.GuildID, roleId)
 
 		s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseChannelMessageWithSource,
