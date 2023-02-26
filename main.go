@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"oenugs-bot/rabbitmq"
 	"oenugs-bot/slashHandlers"
 	"oenugs-bot/utils"
 	"os"
@@ -103,6 +104,8 @@ var (
 )
 
 func main() {
+	go rabbitmq.StartListening()
+
 	// Create a new Discord session using the provided bot token.
 	dg, err := discordgo.New("Bot " + BotToken)
 	if err != nil {
