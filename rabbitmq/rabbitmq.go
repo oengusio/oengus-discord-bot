@@ -24,7 +24,7 @@ var lifetime = 0 * time.Second
 var queueName = "oengus.bot"
 
 func StartListening() {
-	c, err := NewConsumer("amqp://duncte123:password@localhost:5672/", "amq.topic", "", queueName, "", "")
+	c, err := NewConsumer("amqp://duncte123:password@localhost:5672/", "amq.topic", "topuc", queueName, queueName, "")
 	if err != nil {
 		log.Fatalf("%s", err)
 	}
@@ -100,21 +100,21 @@ func NewConsumer(amqpURI, exchange, exchangeType, queueName, key, ctag string) (
 	  	return nil, fmt.Errorf("Exchange Declare: %s", err)
 	  }
 
-	  log.Printf("declared Exchange, declaring Queue %q", queueName)
-	  queue, err := c.channel.QueueDeclare(
-	  	queueName, // name of the queue
-	  	true,      // durable
-	  	false,     // delete when unused
-	  	false,     // exclusive
-	  	false,     // noWait
-	  	nil,       // arguments
-	  )
-	  if err != nil {
-	  	return nil, fmt.Errorf("Queue Declare: %s", err)
-	  }
+	  log.Printf("declared Exchange, declaring Queue %q", queueName)*/
+	queue, err := c.channel.QueueDeclare(
+		queueName, // name of the queue
+		true,      // durable
+		false,     // delete when unused
+		false,     // exclusive
+		false,     // noWait
+		nil,       // arguments
+	)
+	if err != nil {
+		return nil, fmt.Errorf("Queue Declare: %s", err)
+	}
 
-	  log.Printf("declared Queue (%q %d messages, %d consumers), binding to Exchange (key %q)",
-	  	queue.Name, queue.Messages, queue.Consumers, key)*/
+	log.Printf("declared Queue (%q %d messages, %d consumers), binding to Exchange (key %q)",
+		queue.Name, queue.Messages, queue.Consumers, key)
 
 	if err = c.channel.QueueBind(
 		queueName, // name of the queue

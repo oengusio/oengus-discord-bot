@@ -11,6 +11,80 @@ import (
 
 // TODO: https://pkg.go.dev/golang.org/x/exp/slices#Contains
 
+func GetUserProfile(userId int) (ProfileDto, error) {
+	db := getConnection()
+	defer closeConnection(db)
+
+	var profile ProfileDto
+
+	sql := "SELECT id, username FROM users WHERE id = $1"
+
+	rows, err := db.Query(context.Background(), sql, userId)
+
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "QueryRow failed: %v\n", err)
+		return profile, err
+	}
+
+	if rows.Next() {
+		var userId int
+		var username string
+
+		// Scan is positional, not name based
+		err := rows.Scan(&userId, &username)
+
+		if err != nil {
+			fmt.Println("Error scanning rows", err)
+			return profile, err
+		}
+
+		profile = ProfileDto{
+			Id:       userId,
+			Username: username,
+		}
+	}
+
+	return profile, nil
+}
+
+func GetGameById(gameId int) (GameDto, error) {
+	db := getConnection()
+	defer closeConnection(db)
+
+	var game GameDto
+
+	sql := "SELECT id, name, console FROM game WHERE id = $1"
+
+	rows, err := db.Query(context.Background(), sql, gameId)
+
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "QueryRow failed: %v\n", err)
+		return game, err
+	}
+
+	if rows.Next() {
+		var id int
+		var name string
+		var console string
+
+		// Scan is positional, not name based
+		err := rows.Scan(&id, &name, &console)
+
+		if err != nil {
+			fmt.Println("Error scanning rows", err)
+			return game, err
+		}
+
+		game = GameDto{
+			Id:      id,
+			Name:    name,
+			Console: console,
+		}
+	}
+
+	return game, nil
+}
+
 func GetMarathonSelectionDone(marathonId string) (bool, error) {
 	db := getConnection()
 	defer closeConnection(db)
