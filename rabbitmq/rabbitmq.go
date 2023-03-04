@@ -7,7 +7,6 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
-	"time"
 )
 
 type Consumer struct {
@@ -17,27 +16,21 @@ type Consumer struct {
 	done    chan error
 }
 
-var autoAck = false
 var verbose = true
 var deliveryCount = 0
-var lifetime = 0 * time.Second
-var queueName = "oengus.bot"
+var queueName = "oengus.bot" // Also our routing key
 
 func StartListening() {
 	c, err := NewConsumer("amqp://duncte123:password@localhost:5672/", "amq.topic", "topuc", queueName, queueName, "")
+
 	if err != nil {
 		log.Fatalf("%s", err)
 	}
 
 	SetupCloseHandler(c)
 
-	if lifetime > 0 {
-		log.Printf("running for %s", lifetime)
-		time.Sleep(lifetime)
-	} else {
-		log.Printf("running until Consumer is done")
-		<-c.done
-	}
+	log.Printf("running until Consumer is done")
+	<-c.done
 
 	log.Printf("shutting down")
 
@@ -74,7 +67,7 @@ func NewConsumer(amqpURI, exchange, exchangeType, queueName, key, ctag string) (
 	log.Printf("dialing %q", amqpURI)
 	c.conn, err = amqp.DialConfig(amqpURI, config)
 	if err != nil {
-		return nil, fmt.Errorf("Dial: %s", err)
+		return nil, fmt.Errorf("dial: %s", err)
 	}
 
 	go func() {
@@ -84,7 +77,7 @@ func NewConsumer(amqpURI, exchange, exchangeType, queueName, key, ctag string) (
 	log.Printf("got Connection, getting Channel")
 	c.channel, err = c.conn.Channel()
 	if err != nil {
-		return nil, fmt.Errorf("Channel: %s", err)
+		return nil, fmt.Errorf("channel: %s", err)
 	}
 
 	log.Printf("got Channel, declaring Exchange (%q)", exchange)
@@ -110,7 +103,7 @@ func NewConsumer(amqpURI, exchange, exchangeType, queueName, key, ctag string) (
 		nil,       // arguments
 	)
 	if err != nil {
-		return nil, fmt.Errorf("Queue Declare: %s", err)
+		return nil, fmt.Errorf("queue declare: %s", err)
 	}
 
 	log.Printf("declared Queue (%q %d messages, %d consumers), binding to Exchange (key %q)",
@@ -123,7 +116,7 @@ func NewConsumer(amqpURI, exchange, exchangeType, queueName, key, ctag string) (
 		false,     // noWait
 		nil,       // arguments
 	); err != nil {
-		return nil, fmt.Errorf("Queue Bind: %s", err)
+		return nil, fmt.Errorf("queue bind: %s", err)
 	}
 
 	log.Printf("Queue bound to Exchange, starting Consume (consumer tag %q)", c.tag)
@@ -137,13 +130,14 @@ func NewConsumer(amqpURI, exchange, exchangeType, queueName, key, ctag string) (
 		nil,       // arguments
 	)
 	if err != nil {
-		return nil, fmt.Errorf("Queue Consume: %s", err)
+		return nil, fmt.Errorf("queue consume: %s", err)
 	}
 
 	go func() {
-		for {
-			handle(deliveries, c.done)
-		}
+		//for {
+		//	handle(deliveries, c.done)
+		//}
+		handle(deliveries, c.done)
 	}()
 
 	return c, nil
@@ -152,7 +146,7 @@ func NewConsumer(amqpURI, exchange, exchangeType, queueName, key, ctag string) (
 func (c *Consumer) Shutdown() error {
 	// will close() the deliveries channel
 	if err := c.channel.Cancel(c.tag, true); err != nil {
-		return fmt.Errorf("Consumer cancel failed: %s", err)
+		return fmt.Errorf("consumer cancel failed: %s", err)
 	}
 
 	if err := c.conn.Close(); err != nil {
@@ -174,8 +168,19 @@ func handle(deliveries <-chan amqp.Delivery, done chan error) {
 	defer cleanup()
 
 	for d := range deliveries {
+		jsonBody := string(d.Body)
+
+		err := handleIncomingEvent(jsonBody)
+
+		if err == nil {
+			d.Ack(false)
+		} else {
+			// Reject failed messages, usually because it's not json
+			d.Reject(false)
+		}
+
 		deliveryCount++
-		if verbose == true {
+		if verbose {
 			log.Printf(
 				"got %dB delivery: [%v] %q",
 				len(d.Body),
@@ -186,9 +191,6 @@ func handle(deliveries <-chan amqp.Delivery, done chan error) {
 			if deliveryCount%65536 == 0 {
 				log.Printf("delivery count %d", deliveryCount)
 			}
-		}
-		if autoAck == false {
-			d.Ack(false)
 		}
 	}
 }

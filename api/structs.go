@@ -1,5 +1,15 @@
 package api
 
+type WebhookData struct {
+	Event              string         `json:"event"`
+	Game               GameDto        `json:"game"`
+	Category           CategoryDto    `json:"category"`
+	Submission         Submission     `json:"submission"` // TODO: make DTOs for submissions
+	OriginalSubmission Submission     `json:"original_submission"`
+	DeletedBy          ProfileDto     `json:"deleted_by"`
+	Selections         []SelectionDto `json:"selections"`
+}
+
 type MarathonStats struct {
 	SubmissionCount int    `json:"submissionCount"`
 	RunnerCount     int    `json:"runnerCount"`
@@ -7,6 +17,7 @@ type MarathonStats struct {
 	AverageEstimate string `json:"averageEstimate"`
 }
 
+// TODO: Might store this as json in the database tbh
 type MarathonSettings struct {
 	Discord MarathonDiscordSettings `json:"discord_settings"`
 }
