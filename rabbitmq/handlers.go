@@ -2,11 +2,14 @@ package rabbitmq
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/bwmarrin/discordgo"
 	"log"
 	"oenugs-bot/api"
+	"oenugs-bot/utils"
 )
 
+var shortUrl = "https://oengus.fun"
 var eventHandlers = map[string]func(dg *discordgo.Session, data *api.WebhookData, params *api.BotHookParams){
 	"SUBMISSION_ADD": handleSubmissionAdd,
 }
@@ -45,12 +48,38 @@ func handleIncomingEvent(rawJson []byte, dg *discordgo.Session) error {
 
 func handleSubmissionAdd(dg *discordgo.Session, data *api.WebhookData, params *api.BotHookParams) {
 	// TODO: get marathon name for code
+	marathonName, err := api.GetMarathonName(params.MarathonId)
 
-	for _, game := range data.Submission.Games {
-		sendNewGame(dg, game, params.NewSub, params.MarathonId, "")
+	if err != nil {
+		fmt.Println("Failed to look up marathon name for code `" + params.MarathonId + "`: " + err.Error())
+		return
+	}
+
+	fmt.Println("Marathon name is " + marathonName)
+
+	submission := data.Submission
+
+	for _, game := range submission.Games {
+		for _, category := range game.Categories {
+			sendNewCategory(dg, game, category, submission.User.Username, params.NewSub, params.MarathonId, marathonName)
+		}
 	}
 }
 
-func sendNewGame(dg *discordgo.Session, game api.Game, channelId, marathonId, marathonName string) {
-	//
+func sendNewCategory(dg *discordgo.Session, game api.Game, cat api.Category, submitter, channelId, marathonId, marathonName string) {
+	_, err := dg.ChannelMessageSendEmbed(channelId, &discordgo.MessageEmbed{
+		URL:   shortUrl + "/" + marathonId + "/submissions",
+		Title: utils.EscapeMarkdown(submitter + " submitted a run to " + marathonName),
+		Description: fmt.Sprintf(
+			"**Game:** %s\n**Category:** %s\n**Platform:** %s\n**Estimate:** %s",
+			utils.EscapeMarkdown(game.Name),
+			utils.EscapeMarkdown(cat.Name),
+			utils.EscapeMarkdown(game.Console),
+			utils.ParseAndMakeDurationPretty(cat.Estimate),
+		),
+	})
+
+	if err != nil {
+		fmt.Println("Failed to send a message to discord " + err.Error())
+	}
 }

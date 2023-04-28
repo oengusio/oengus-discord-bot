@@ -60,11 +60,20 @@ type Submission struct {
 }
 
 type Game struct {
-	Id         int `json:"id"`
-	Categories []struct {
-		Id     int    `json:"id"`
-		Status string `json:"status"`
-	} `json:"categories"`
+	Id         int        `json:"id"`
+	Name       string     `json:"name"`
+	Console    string     `json:"console"`
+	Categories []Category `json:"categories"`
+}
+
+type Category struct {
+	Id          int    `json:"id"`
+	Name        string `json:"name"`
+	Estimate    string `json:"estimate"`
+	Description string `json:"description"`
+	Video       string `json:"video"`
+	Type        string `json:"type"`
+	Status      string `json:"status"`
 }
 
 // NOTE: we're only storing the most important bits

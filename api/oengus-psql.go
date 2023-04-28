@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/jackc/pgx/v4"
 	"os"
@@ -10,6 +11,34 @@ import (
 )
 
 // TODO: https://pkg.go.dev/golang.org/x/exp/slices#Contains
+
+func GetMarathonName(code string) (string, error) {
+	db := getConnection()
+	defer closeConnection(db)
+
+	sql := "SELECT name FROM marathon WHERE id = $1"
+
+	rows, err := db.Query(context.Background(), sql, code)
+
+	if err != nil {
+		return "", err
+	}
+
+	if rows.Next() {
+		var name string
+
+		// Scan is positional, not name based
+		err := rows.Scan(&name)
+
+		if err != nil {
+			return "", err
+		}
+
+		return name, nil
+	}
+
+	return "", errors.New("database lookup failed")
+}
 
 func GetUserProfile(userId int) (ProfileDto, error) {
 	db := getConnection()
