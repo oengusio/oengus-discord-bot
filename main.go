@@ -104,8 +104,6 @@ var (
 )
 
 func main() {
-	go rabbitmq.StartListening()
-
 	// Create a new Discord session using the provided bot token.
 	dg, err := discordgo.New("Bot " + BotToken)
 	if err != nil {
@@ -192,4 +190,6 @@ func ready(s *discordgo.Session, event *discordgo.Ready) {
 	s.UpdateStatusComplex(*usd)
 
 	fmt.Println("Bot is ready!")
+
+	go rabbitmq.StartListening(s)
 }

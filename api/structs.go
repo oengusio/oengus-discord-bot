@@ -2,12 +2,20 @@ package api
 
 type WebhookData struct {
 	Event              string         `json:"event"`
+	Url                string         `json:"url"`
 	Game               GameDto        `json:"game"`
 	Category           CategoryDto    `json:"category"`
 	Submission         Submission     `json:"submission"` // TODO: make DTOs for submissions
 	OriginalSubmission Submission     `json:"original_submission"`
 	DeletedBy          ProfileDto     `json:"deleted_by"`
 	Selections         []SelectionDto `json:"selections"`
+}
+
+type BotHookParams struct {
+	EditSub    string
+	NewSub     string
+	Donation   string
+	MarathonId string
 }
 
 type MarathonStats struct {

@@ -2,6 +2,7 @@ package rabbitmq
 
 import (
 	"fmt"
+	"github.com/bwmarrin/discordgo"
 	amqp "github.com/rabbitmq/amqp091-go"
 	"log"
 	"os"
@@ -20,8 +21,8 @@ var verbose = true
 var deliveryCount = 0
 var queueName = "oengus.bot" // Also our routing key
 
-func StartListening() {
-	c, err := NewConsumer("amqp://duncte123:password@localhost:5672/", "amq.topic", "topuc", queueName, queueName, "")
+func StartListening(dg *discordgo.Session) {
+	c, err := NewConsumer("amqp://duncte123:password@localhost:5672/", "amq.topic", "topic", queueName, queueName, "", dg)
 
 	if err != nil {
 		log.Fatalf("%s", err)
@@ -52,7 +53,7 @@ func SetupCloseHandler(consumer *Consumer) {
 	}()
 }
 
-func NewConsumer(amqpURI, exchange, exchangeType, queueName, key, ctag string) (*Consumer, error) {
+func NewConsumer(amqpURI, exchange, exchangeType, queueName, key, ctag string, dg *discordgo.Session) (*Consumer, error) {
 	c := &Consumer{
 		conn:    nil,
 		channel: nil,
@@ -137,7 +138,7 @@ func NewConsumer(amqpURI, exchange, exchangeType, queueName, key, ctag string) (
 		//for {
 		//	handle(deliveries, c.done)
 		//}
-		handle(deliveries, c.done)
+		handle(deliveries, c.done, dg)
 	}()
 
 	return c, nil
@@ -159,7 +160,7 @@ func (c *Consumer) Shutdown() error {
 	return <-c.done
 }
 
-func handle(deliveries <-chan amqp.Delivery, done chan error) {
+func handle(deliveries <-chan amqp.Delivery, done chan error, dg *discordgo.Session) {
 	cleanup := func() {
 		log.Printf("handle: deliveries channel closed")
 		done <- nil
@@ -168,15 +169,14 @@ func handle(deliveries <-chan amqp.Delivery, done chan error) {
 	defer cleanup()
 
 	for d := range deliveries {
-		jsonBody := string(d.Body)
-
-		err := handleIncomingEvent(jsonBody)
+		err := handleIncomingEvent(d.Body, dg)
 
 		if err == nil {
 			d.Ack(false)
 		} else {
 			// Reject failed messages, usually because it's not json
 			d.Reject(false)
+			fmt.Println("Error handling rmq event", err)
 		}
 
 		deliveryCount++
