@@ -60,10 +60,11 @@ type Submission struct {
 }
 
 type Game struct {
-	Id         int        `json:"id"`
-	Name       string     `json:"name"`
-	Console    string     `json:"console"`
-	Categories []Category `json:"categories"`
+	Id          int        `json:"id"`
+	Name        string     `json:"name"`
+	Console     string     `json:"console"`
+	Description string     `json:"description"`
+	Categories  []Category `json:"categories"`
 }
 
 type Category struct {

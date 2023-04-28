@@ -8,6 +8,7 @@ import (
 	"log"
 	"oenugs-bot/api"
 	"oenugs-bot/utils"
+	"strings"
 )
 
 var shortUrl = "https://oengus.fun"
@@ -88,9 +89,14 @@ func handleSubmissionEdit(dg *discordgo.Session, data *api.WebhookData, params *
 	canPostNew := params.NewSub != ""
 	submission := data.Submission
 
-	for _, newGame := range submission.Games {
-		oldGame := findOldGame(newGame.Id, data.OriginalSubmission)
+	// 1. Search for deleted games/categories
+	// TODO: Send deleted games and categories
 
+	// 2. Search for added/updated games/categories
+	for _, newGame := range submission.Games {
+		oldGame := findGame(newGame.Id, data.OriginalSubmission)
+
+		// User as added a new game
 		if oldGame == nil {
 			// Cheat a little with the parameters
 			if canPostNew {
@@ -104,14 +110,51 @@ func handleSubmissionEdit(dg *discordgo.Session, data *api.WebhookData, params *
 			}, marathonName)
 			continue
 		}
+
+		for _, newCategory := range newGame.Categories {
+			oldCategory := findCategory(newCategory.Id, oldGame)
+
+			// User has added a new category
+			if oldCategory == nil {
+				if canPostNew {
+					sendNewCategoryEmbed(
+						dg, newGame, newCategory,
+						submission.User.Username, params.NewSub,
+						params.MarathonId, marathonName)
+				}
+
+				sendNewCategoryEmbed(
+					dg, newGame, newCategory,
+					submission.User.Username, params.EditSub,
+					params.MarathonId, marathonName)
+				continue
+			}
+
+			if cmp.Equal(newCategory, oldCategory) && cmp.Equal(newGame, oldGame) {
+				continue
+			}
+
+			// TODO: seems to send unchanged submission
+			sendUpdatedCategory(dg, newGame, oldGame, newCategory, oldCategory, params.EditSub, params.MarathonId, submission.User.Username, marathonName)
+		}
 	}
 
 }
 
-func findOldGame(gameId int, sub api.Submission) *api.Game {
+func findGame(gameId int, sub api.Submission) *api.Game {
 	for _, game := range sub.Games {
 		if game.Id == gameId {
 			return &game
+		}
+	}
+
+	return nil
+}
+
+func findCategory(categoryId int, game *api.Game) *api.Category {
+	for _, category := range game.Categories {
+		if category.Id == categoryId {
+			return &category
 		}
 	}
 
@@ -144,4 +187,61 @@ func sendNewCategoryEmbed(dg *discordgo.Session, game api.Game, cat api.Category
 	if err != nil {
 		fmt.Println("Failed to send a message to discord " + err.Error())
 	}
+}
+
+func sendUpdatedCategory(
+	dg *discordgo.Session, newGame api.Game, oldGame *api.Game,
+	newCategory api.Category, oldCategory *api.Category,
+	channelId, marathonId, username, marathonName string) {
+
+	builder := strings.Builder{}
+
+	newDuration := utils.ParseAndMakeDurationPretty(newCategory.Estimate)
+	oldDuration := utils.ParseAndMakeDurationPretty(oldCategory.Estimate)
+
+	builder.WriteString(fmt.Sprintf(
+		"**Game:** %s\n**Category:** %s\n**Platform:** %s\n**Estimate:** %s",
+		parseUpdatedString(newGame.Name, oldGame.Name),
+		parseUpdatedString(newCategory.Name, oldCategory.Name),
+		parseUpdatedString(newGame.Console, oldGame.Console),
+		parseUpdatedString(newDuration, oldDuration),
+	))
+
+	if newCategory.Video != oldCategory.Video {
+		builder.WriteString("\n**Video:** ")
+		builder.WriteString(parseUpdatedString(newCategory.Video, oldCategory.Video))
+	}
+
+	if newCategory.Type != oldCategory.Type {
+		builder.WriteString("\n**Run Type:** ")
+		builder.WriteString(parseUpdatedString(newCategory.Type, oldCategory.Type))
+	}
+
+	if newCategory.Description != oldCategory.Description {
+		builder.WriteString("\n**Category Description:** ")
+		builder.WriteString(parseUpdatedString(newCategory.Description, oldCategory.Description))
+	}
+
+	if newGame.Description != oldGame.Description {
+		builder.WriteString("\n**Game Description:** ")
+		builder.WriteString(parseUpdatedString(newGame.Description, oldGame.Description))
+	}
+
+	_, err := dg.ChannelMessageSendEmbed(channelId, &discordgo.MessageEmbed{
+		URL:         shortUrl + "/" + marathonId + "/submissions",
+		Title:       utils.EscapeMarkdown(username + " updated a run in " + marathonName),
+		Description: builder.String(),
+	})
+
+	if err != nil {
+		fmt.Println("Failed to send a message to discord " + err.Error())
+	}
+}
+
+func parseUpdatedString(current, old string) string {
+	if current == old {
+		return utils.EscapeMarkdown(current)
+	}
+
+	return utils.EscapeMarkdown(current + " (was " + old + ")")
 }
