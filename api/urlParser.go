@@ -1,11 +1,10 @@
-package utils
+package api
 
 import (
 	"net/url"
-	"oenugs-bot/api"
 )
 
-func GetBotParamsFromUrl(botUrl string) (*api.BotHookParams, error) {
+func GetBotParamsFromUrl(botUrl string) (*BotHookParams, error) {
 	parsed, e := url.Parse(botUrl)
 
 	if e != nil {
@@ -13,7 +12,7 @@ func GetBotParamsFromUrl(botUrl string) (*api.BotHookParams, error) {
 	}
 
 	params := parsed.Query()
-	obj := &api.BotHookParams{}
+	obj := &BotHookParams{}
 
 	if params.Has("editsub") {
 		obj.EditSub = params.Get("editsub")

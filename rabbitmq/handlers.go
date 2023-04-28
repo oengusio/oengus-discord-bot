@@ -5,7 +5,6 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"log"
 	"oenugs-bot/api"
-	"oenugs-bot/utils"
 )
 
 var eventHandlers = map[string]func(dg *discordgo.Session, data *api.WebhookData, params *api.BotHookParams){
@@ -31,7 +30,7 @@ func handleIncomingEvent(rawJson []byte, dg *discordgo.Session) error {
 		return e
 	}
 
-	params, e2 := utils.GetBotParamsFromUrl(data.Url)
+	params, e2 := api.GetBotParamsFromUrl(data.Url)
 
 	if e2 != nil {
 		return e2
