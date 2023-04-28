@@ -47,6 +47,10 @@ func handleIncomingEvent(rawJson []byte, dg *discordgo.Session) error {
 }
 
 func handleSubmissionAdd(dg *discordgo.Session, data *api.WebhookData, params *api.BotHookParams) {
+	if params.NewSub == "" {
+		return
+	}
+
 	// TODO: get marathon name for code
 	marathonName, err := api.GetMarathonName(params.MarathonId)
 
@@ -55,18 +59,20 @@ func handleSubmissionAdd(dg *discordgo.Session, data *api.WebhookData, params *a
 		return
 	}
 
-	fmt.Println("Marathon name is " + marathonName)
-
 	submission := data.Submission
 
 	for _, game := range submission.Games {
 		for _, category := range game.Categories {
-			sendNewCategory(dg, game, category, submission.User.Username, params.NewSub, params.MarathonId, marathonName)
+			sendNewCategoryEmbed(dg, game, category, submission.User.Username, params.NewSub, params.MarathonId, marathonName)
+
+			if params.EditSub != "" && params.EditSub != params.NewSub {
+				sendNewCategoryEmbed(dg, game, category, submission.User.Username, params.EditSub, params.MarathonId, marathonName)
+			}
 		}
 	}
 }
 
-func sendNewCategory(dg *discordgo.Session, game api.Game, cat api.Category, submitter, channelId, marathonId, marathonName string) {
+func sendNewCategoryEmbed(dg *discordgo.Session, game api.Game, cat api.Category, submitter, channelId, marathonId, marathonName string) {
 	_, err := dg.ChannelMessageSendEmbed(channelId, &discordgo.MessageEmbed{
 		URL:   shortUrl + "/" + marathonId + "/submissions",
 		Title: utils.EscapeMarkdown(submitter + " submitted a run to " + marathonName),
