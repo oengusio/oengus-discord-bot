@@ -14,8 +14,9 @@ import (
 
 var shortUrl = "https://oengus.fun"
 var eventHandlers = map[string]func(dg *discordgo.Session, data api.WebhookData, params api.BotHookParams){
-	"SUBMISSION_ADD":  handleSubmissionAdd,
-	"SUBMISSION_EDIT": handleSubmissionEdit,
+	"SUBMISSION_ADD":    handleSubmissionAdd,
+	"SUBMISSION_EDIT":   handleSubmissionEdit,
+	"SUBMISSION_DELETE": handleSubmissionDelete,
 }
 
 func parseObject(rawJson []byte) (*api.WebhookData, error) {
@@ -165,6 +166,26 @@ func handleSubmissionEdit(dg *discordgo.Session, data api.WebhookData, params ap
 
 			sendUpdatedCategory(dg, newGame, nonNilOldGame, newCategory, nonNilCategory, params.EditSub, params.MarathonId, username, marathonName)
 		}
+	}
+}
+
+func handleSubmissionDelete(dg *discordgo.Session, data api.WebhookData, params api.BotHookParams) {
+	if params.EditSub == "" {
+		return
+	}
+
+	marathonName, err := api.GetMarathonName(params.MarathonId)
+
+	if err != nil {
+		fmt.Println("Failed to look up marathon name for code `" + params.MarathonId + "`: " + err.Error())
+		return
+	}
+
+	deletedBy := data.DeletedBy.Username
+	submitter := data.Submission.User.Username
+
+	for _, game := range data.Submission.Games {
+		sendGameRemoved(dg, game, submitter, deletedBy, params.EditSub, params.MarathonId, marathonName)
 	}
 }
 

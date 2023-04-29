@@ -7,7 +7,7 @@ type WebhookData struct {
 	Category           CategoryDto    `json:"category"`
 	Submission         Submission     `json:"submission"` // TODO: make DTOs for submissions
 	OriginalSubmission Submission     `json:"original_submission"`
-	DeletedBy          ProfileDto     `json:"deleted_by"`
+	DeletedBy          User           `json:"deleted_by"`
 	Selections         []SelectionDto `json:"selections"`
 }
 
