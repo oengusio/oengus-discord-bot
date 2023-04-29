@@ -17,9 +17,11 @@ type Consumer struct {
 	done    chan error
 }
 
-var verbose = true
+const verbose = false
+
 var deliveryCount = 0
-var queueName = "oengus.bot" // Also our routing key
+
+const queueName = "oengus.bot" // Also our routing key
 
 func StartListening(dg *discordgo.Session) {
 	c, err := NewConsumer("amqp://duncte123:password@localhost:5672/", "amq.topic", "topic", queueName, queueName, "", dg)

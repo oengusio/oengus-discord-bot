@@ -11,15 +11,19 @@ import (
 	"oenugs-bot/api"
 	"oenugs-bot/utils"
 	"strings"
+	"time"
 )
 
+// TODO: replace bot webhook with settings.
 var shortUrl = "https://oengus.fun"
 var eventHandlers = map[string]func(dg *discordgo.Session, data api.WebhookData, params api.BotHookParams){
+	// TODO: donation (When we support it again)
 	"SUBMISSION_ADD":    handleSubmissionAdd,
 	"SUBMISSION_EDIT":   handleSubmissionEdit,
 	"SUBMISSION_DELETE": handleSubmissionDelete,
 	"GAME_DELETE":       handleGameDelete,
 	"CATEGORY_DELETE":   handleCategoryDelete,
+	"SELECTION_DONE":    handleSelectionDone,
 }
 
 func parseObject(rawJson []byte) (*api.WebhookData, error) {
@@ -232,6 +236,42 @@ func handleCategoryDelete(dg *discordgo.Session, data api.WebhookData, params ap
 	sendRemovedCategoryEmbed(dg, data.Game, data.Category, submitter, deletedBy, params.EditSub, params.MarathonId, marathonName)
 }
 
+func handleSelectionDone(dg *discordgo.Session, data api.WebhookData, params api.BotHookParams) {
+	if params.NewSub == "" {
+		return
+	}
+
+	channelId := params.NewSub
+
+	_, _ = dg.ChannelMessageSend(channelId, "Runs have been accepted, get ready for the announcements!")
+
+	ticker := time.NewTicker(30 * time.Second)
+	quit := make(chan struct{})
+
+	index := 0
+
+	go func() {
+		for {
+			select {
+			case <-ticker.C:
+				if index >= len(data.Selections) {
+					close(quit)
+					_, _ = dg.ChannelMessageSend(channelId, "Th-th-th-th-th-That's all, Folks.")
+					return
+				}
+
+				selection := data.Selections[index]
+				index++
+
+				sendSelectionApprovedEmbed(dg, params.NewSub, selection)
+			case <-quit:
+				ticker.Stop()
+				return
+			}
+		}
+	}()
+}
+
 func findGame(gameId int, sub api.Submission) *api.Game {
 	for _, game := range sub.Games {
 		if game.Id == gameId {
@@ -355,6 +395,48 @@ func sendRemovedCategoryEmbed(dg *discordgo.Session, game api.Game, cat api.Cate
 			utils.EscapeMarkdown(cat.Name),
 			utils.EscapeMarkdown(game.Console),
 			utils.ParseAndMakeDurationPretty(cat.Estimate),
+		),
+	})
+
+	if err != nil {
+		fmt.Println("Failed to send a message to discord " + err.Error())
+	}
+}
+
+func sendSelectionApprovedEmbed(dg *discordgo.Session, channelId string, selection api.SelectionDto) {
+	category := selection.Category
+
+	game, gErr := api.GetGameById(category.GameId)
+
+	if gErr != nil {
+		fmt.Println("Game lookup failed " + gErr.Error())
+		return
+	}
+
+	user, uErr := api.GetUserProfile(category.UserId)
+
+	if uErr != nil {
+		fmt.Println("User lookup failed " + gErr.Error())
+		return
+	}
+
+	opponentUsernames := utils.Map(category.Opponents, func(t api.OpponentCategoryDto) string {
+		return t.User.Username
+	})
+
+	opponents := strings.Join(append([]string{user.Username}, opponentUsernames...), ", ")
+
+	_, err := dg.ChannelMessageSendEmbed(channelId, &discordgo.MessageEmbed{
+		URL:   shortUrl + "/" + selection.MarathonId,
+		Title: "A run has been accepted!",
+		Description: fmt.Sprintf(
+			"**Submitted by:** %s\n**Game:** %s\n**Category:** %s\n**Estimate:** %s\n**Platform:** %s\n**Runners:** %s",
+			utils.EscapeMarkdown(user.Username),
+			utils.EscapeMarkdown(game.Name),
+			utils.EscapeMarkdown(category.Name),
+			utils.ParseAndMakeDurationPretty(category.Estimate),
+			utils.EscapeMarkdown(game.Console),
+			utils.EscapeMarkdown(opponents),
 		),
 	})
 
