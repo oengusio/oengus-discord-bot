@@ -1,8 +1,8 @@
-name: Public to production
+name: Public to development
 on:
-  workflow_dispatch: {}
-#    push:
-#        branches: [master]
+    push:
+        branches: [master]
+
 jobs:
   build:
 
@@ -28,7 +28,7 @@ jobs:
         with:
           context: .
           push: true
-          tags: oengusio/bot:latest
+          tags: oengusio/bot:dev
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache-new
           build-args: |
@@ -49,4 +49,4 @@ jobs:
       - name: Trigger prod webhook
         uses: distributhor/workflow-webhook@v3
         env:
-          webhook_url: ${{ secrets.WEBHOOK_URL }}
+          webhook_url: ${{ secrets.TESTING_WEBHOOK_URL }}

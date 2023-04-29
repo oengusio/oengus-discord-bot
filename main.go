@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"oenugs-bot/rabbitmq"
 	"oenugs-bot/slashHandlers"
 	"oenugs-bot/utils"
 	"os"
@@ -189,4 +190,6 @@ func ready(s *discordgo.Session, event *discordgo.Ready) {
 	s.UpdateStatusComplex(*usd)
 
 	fmt.Println("Bot is ready!")
+
+	go rabbitmq.StartListening(s)
 }

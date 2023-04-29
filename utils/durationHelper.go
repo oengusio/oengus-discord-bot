@@ -1,9 +1,8 @@
 package utils
 
-// Source https://gist.github.com/spatialtime/2a54a6dbf80121997b2459b2d3b9b380
-
 import (
 	"errors"
+	"fmt"
 	"regexp"
 	"strconv"
 	"strings"
@@ -13,12 +12,28 @@ import (
 func ParseAndMakeDurationPretty(duration string) string {
 	dur, _ := ParseDuration(duration)
 
+	// Remnants of failed attempts
 	//return fmt.Sprintf("%f hours, %f minutes, %f seconds", dur.Hours(), dur.Minutes(), dur.Seconds())
-	return dur.String()
+	//return fmt.Sprintf("%02d:%02d:%02d", int64(dur.Hours()), int64(dur.Minutes()), int64(dur.Seconds()))
+	//return dur.String()
+
+	dur = dur.Round(time.Second)
+
+	hours := dur / time.Hour
+	dur -= hours * time.Hour
+
+	minutes := dur / time.Minute
+	dur -= minutes * time.Minute
+
+	seconds := dur / time.Second
+
+	return fmt.Sprintf("%02d:%02d:%02d", hours, minutes, seconds)
 }
 
 // ParseDuration parses an ISO 8601 string representing a duration,
 // and returns the resultant golang time.Duration instance.
+//
+// Source: https://gist.github.com/spatialtime/2a54a6dbf80121997b2459b2d3b9b380
 func ParseDuration(isoDuration string) (time.Duration, error) {
 	re := regexp.MustCompile(`^P(?:(\d+)Y)?(?:(\d+)M)?(?:(\d+)D)?T(?:(\d+)H)?(?:(\d+)M)?(?:(\d+(?:.\d+)?)S)?$`)
 	matches := re.FindStringSubmatch(isoDuration)

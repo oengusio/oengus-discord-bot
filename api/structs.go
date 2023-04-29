@@ -1,5 +1,23 @@
 package api
 
+type WebhookData struct {
+	Event              string         `json:"event"`
+	Url                string         `json:"url"`
+	Game               Game           `json:"game"`
+	Category           Category       `json:"category"`
+	Submission         Submission     `json:"submission"` // TODO: make DTOs for submissions
+	OriginalSubmission Submission     `json:"original_submission"`
+	DeletedBy          User           `json:"deleted_by"`
+	Selections         []SelectionDto `json:"selections"`
+}
+
+type BotHookParams struct {
+	EditSub    string
+	NewSub     string
+	Donation   string
+	MarathonId string
+}
+
 type MarathonStats struct {
 	SubmissionCount int    `json:"submissionCount"`
 	RunnerCount     int    `json:"runnerCount"`
@@ -7,6 +25,7 @@ type MarathonStats struct {
 	AverageEstimate string `json:"averageEstimate"`
 }
 
+// TODO: Might store this as json in the database tbh
 type MarathonSettings struct {
 	Discord MarathonDiscordSettings `json:"discord_settings"`
 }
@@ -41,11 +60,21 @@ type Submission struct {
 }
 
 type Game struct {
-	Id         int `json:"id"`
-	Categories []struct {
-		Id     int    `json:"id"`
-		Status string `json:"status"`
-	} `json:"categories"`
+	Id          int        `json:"id"`
+	Name        string     `json:"name"`
+	Console     string     `json:"console"`
+	Description string     `json:"description"`
+	Categories  []Category `json:"categories"`
+}
+
+type Category struct {
+	Id          int    `json:"id"`
+	Name        string `json:"name"`
+	Estimate    string `json:"estimate"`
+	Description string `json:"description"`
+	Video       string `json:"video"`
+	Type        string `json:"type"`
+	Status      string `json:"status"`
 }
 
 // NOTE: we're only storing the most important bits
