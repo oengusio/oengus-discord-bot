@@ -2,6 +2,7 @@ package rabbitmq
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/bwmarrin/discordgo"
 	"github.com/google/go-cmp/cmp"
@@ -17,6 +18,7 @@ var eventHandlers = map[string]func(dg *discordgo.Session, data api.WebhookData,
 	"SUBMISSION_ADD":    handleSubmissionAdd,
 	"SUBMISSION_EDIT":   handleSubmissionEdit,
 	"SUBMISSION_DELETE": handleSubmissionDelete,
+	"GAME_DELETE":       handleGameDelete,
 }
 
 func parseObject(rawJson []byte) (*api.WebhookData, error) {
@@ -42,6 +44,10 @@ func handleIncomingEvent(rawJson []byte, dg *discordgo.Session) error {
 
 	if e2 != nil {
 		return e2
+	}
+
+	if params.MarathonId == "" {
+		return errors.New("marathon id is missing for rmq event")
 	}
 
 	if handler, ok := eventHandlers[data.Event]; ok {
@@ -187,6 +193,24 @@ func handleSubmissionDelete(dg *discordgo.Session, data api.WebhookData, params 
 	for _, game := range data.Submission.Games {
 		sendGameRemoved(dg, game, submitter, deletedBy, params.EditSub, params.MarathonId, marathonName)
 	}
+}
+
+func handleGameDelete(dg *discordgo.Session, data api.WebhookData, params api.BotHookParams) {
+	if params.EditSub == "" {
+		return
+	}
+
+	marathonName, err := api.GetMarathonName(params.MarathonId)
+
+	if err != nil {
+		fmt.Println("Failed to look up marathon name for code `" + params.MarathonId + "`: " + err.Error())
+		return
+	}
+
+	deletedBy := data.DeletedBy.Username
+	submitter := data.Submission.User.Username
+
+	sendGameRemoved(dg, data.Game, submitter, deletedBy, params.EditSub, params.MarathonId, marathonName)
 }
 
 func findGame(gameId int, sub api.Submission) *api.Game {
