@@ -11,4 +11,5 @@ services:
       - REMOVE_COMMANDS_ON_EXIT=false
       - UPDATE_SLASH_COMMANDS=false
       - DATABASE_URI=postgresql://postgres@localhost:5432/oengus
+      - RABBIT_MQ_URI=amqp://duncte123:password@localhost:5672/
       - OENGUS_API_BASE=

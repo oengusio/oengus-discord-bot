@@ -24,7 +24,7 @@ var deliveryCount = 0
 const queueName = "oengus.bot" // Also our routing key
 
 func StartListening(dg *discordgo.Session) {
-	c, err := NewConsumer("amqp://duncte123:password@localhost:5672/", "amq.topic", "topic", queueName, queueName, "", dg)
+	c, err := NewConsumer(os.Getenv("RABBIT_MQ_URI"), "amq.topic", "topic", queueName, queueName, "", dg)
 
 	if err != nil {
 		log.Fatalf("%s", err)
