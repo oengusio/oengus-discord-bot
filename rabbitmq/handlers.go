@@ -19,6 +19,7 @@ var eventHandlers = map[string]func(dg *discordgo.Session, data api.WebhookData,
 	"SUBMISSION_EDIT":   handleSubmissionEdit,
 	"SUBMISSION_DELETE": handleSubmissionDelete,
 	"GAME_DELETE":       handleGameDelete,
+	"CATEGORY_DELETE":   handleCategoryDelete,
 }
 
 func parseObject(rawJson []byte) (*api.WebhookData, error) {
@@ -211,6 +212,24 @@ func handleGameDelete(dg *discordgo.Session, data api.WebhookData, params api.Bo
 	submitter := data.Submission.User.Username
 
 	sendGameRemoved(dg, data.Game, submitter, deletedBy, params.EditSub, params.MarathonId, marathonName)
+}
+
+func handleCategoryDelete(dg *discordgo.Session, data api.WebhookData, params api.BotHookParams) {
+	if params.EditSub == "" {
+		return
+	}
+
+	marathonName, err := api.GetMarathonName(params.MarathonId)
+
+	if err != nil {
+		fmt.Println("Failed to look up marathon name for code `" + params.MarathonId + "`: " + err.Error())
+		return
+	}
+
+	deletedBy := data.DeletedBy.Username
+	submitter := data.Submission.User.Username
+
+	sendRemovedCategoryEmbed(dg, data.Game, data.Category, submitter, deletedBy, params.EditSub, params.MarathonId, marathonName)
 }
 
 func findGame(gameId int, sub api.Submission) *api.Game {

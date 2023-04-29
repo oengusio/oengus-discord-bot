@@ -4,7 +4,7 @@ type WebhookData struct {
 	Event              string         `json:"event"`
 	Url                string         `json:"url"`
 	Game               Game           `json:"game"`
-	Category           CategoryDto    `json:"category"`
+	Category           Category       `json:"category"`
 	Submission         Submission     `json:"submission"` // TODO: make DTOs for submissions
 	OriginalSubmission Submission     `json:"original_submission"`
 	DeletedBy          User           `json:"deleted_by"`
