@@ -247,6 +247,10 @@ func handleSelectionDone(dg *discordgo.Session, data api.WebhookData, params api
 
 	ticker := time.NewTicker(30 * time.Second)
 	quit := make(chan struct{})
+	// Make sure we have all our accepted submissions
+	filteredSubmissions := utils.Filter(data.Selections, func(selection api.SelectionDto) bool {
+		return selection.Status == "VALIDATED"
+	})
 
 	index := 0
 
@@ -254,18 +258,16 @@ func handleSelectionDone(dg *discordgo.Session, data api.WebhookData, params api
 		for {
 			select {
 			case <-ticker.C:
-				if index >= len(data.Selections) {
+				if index >= len(filteredSubmissions) {
 					close(quit)
 					_, _ = dg.ChannelMessageSend(channelId, "Th-th-th-th-th-That's all, Folks.")
 					return
 				}
 
-				selection := data.Selections[index]
+				selection := filteredSubmissions[index]
 				index++
 
-				if selection.Status == "VALIDATED" {
-					sendSelectionApprovedEmbed(dg, params.NewSub, selection)
-				}
+				sendSelectionApprovedEmbed(dg, params.NewSub, selection)
 			case <-quit:
 				ticker.Stop()
 				return
