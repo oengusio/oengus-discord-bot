@@ -263,7 +263,9 @@ func handleSelectionDone(dg *discordgo.Session, data api.WebhookData, params api
 				selection := data.Selections[index]
 				index++
 
-				sendSelectionApprovedEmbed(dg, params.NewSub, selection)
+				if selection.Status == "VALIDATED" {
+					sendSelectionApprovedEmbed(dg, params.NewSub, selection)
+				}
 			case <-quit:
 				ticker.Stop()
 				return
