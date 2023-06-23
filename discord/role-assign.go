@@ -15,7 +15,7 @@ var guildMembersPageLimit = 1000
 //  3. Send updates when members are not in the server/assignment failed
 
 func AssignRoleToRunners(s *discordgo.Session, i *discordgo.InteractionCreate, marathonId, guildId, roleId string) {
-	assignRolesToRunners(s, i, marathonId, guildId, roleId)
+	assignRolesToRunners(s, i, marathonId, i.ChannelID, guildId, roleId)
 }
 
 func RemoveRolesFromRunners(s *discordgo.Session, i *discordgo.InteractionCreate, marathonId, guildId, roleId string) {
@@ -36,7 +36,7 @@ func RemoveRolesFromRunners(s *discordgo.Session, i *discordgo.InteractionCreate
 			return
 		}
 
-		removeRoleFromRunners(s, marathonId, guildId, roleId)
+		removeRoleFromRunners(s, marathonId, i.ChannelID, guildId, roleId)
 	}()
 }
 
@@ -44,7 +44,7 @@ func memberHasRole(member *discordgo.Member, roleId string) bool {
 	return slices.Contains(member.Roles, roleId)
 }
 
-func assignRolesToRunners(s *discordgo.Session, i *discordgo.InteractionCreate, marathonId string, guildId string, roleId string) {
+func assignRolesToRunners(s *discordgo.Session, i *discordgo.InteractionCreate, marathonId, channelId, guildId, roleId string) {
 	// TODO
 	//  1. Fetch marathon settings (already done before this func)
 	//  2. Fetch submissions with status: VALIDATED, BACKUP, BONUS
@@ -69,11 +69,11 @@ func assignRolesToRunners(s *discordgo.Session, i *discordgo.InteractionCreate, 
 			return
 		}
 
-		startRoleAssignment(s, marathonId, guildId, roleId)
+		startRoleAssignment(s, marathonId, channelId, guildId, roleId)
 	}()
 }
 
-func startRoleAssignment(s *discordgo.Session, marathonId, guildId, roleId string) {
+func startRoleAssignment(s *discordgo.Session, marathonId, channelId, guildId, roleId string) {
 	userIDs, err := api.GetAcceptedRunnerDiscordIds(marathonId)
 
 	if err != nil {
@@ -86,6 +86,7 @@ func startRoleAssignment(s *discordgo.Session, marathonId, guildId, roleId strin
 	}
 
 	fmt.Println("Done!")
+	s.ChannelMessageSend(channelId, "Role assignment has been completed!")
 }
 
 func findMember(s *discordgo.Session, guildId, userId string) *discordgo.Member {
@@ -118,7 +119,7 @@ func applyRoleToUser(s *discordgo.Session, userId, guildId, roleId string) {
 	}
 }
 
-func removeRoleFromRunners(s *discordgo.Session, marathonId, guildId, roleId string) {
+func removeRoleFromRunners(s *discordgo.Session, marathonId, channelId, guildId, roleId string) {
 	guild, err := lookupGuild(s, guildId)
 
 	if err != nil {
@@ -148,5 +149,7 @@ func removeRoleFromRunners(s *discordgo.Session, marathonId, guildId, roleId str
 				}
 			}
 		}
+
+		s.ChannelMessageSend(channelId, "Role removal has been completed!")
 	}()
 }

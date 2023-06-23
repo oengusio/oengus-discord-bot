@@ -146,7 +146,7 @@ func GetModeratorsForMarathon(marathonId string) ([]string, error) {
 	db := getConnection()
 	defer closeConnection(db)
 
-	sql := "SELECT discord_id FROM users WHERE id IN (SELECT user_id FROM moderator WHERE marathon_id = $1) OR id = (SELECT creator_id FROM marathon WHERE id = $1)"
+	sql := "SELECT discord_id FROM users WHERE (id IN (SELECT user_id FROM moderator WHERE marathon_id = $1) OR id = (SELECT creator_id FROM marathon WHERE id = $1)) AND discord_id <> '';"
 
 	rows, err := db.Query(context.Background(), sql, marathonId)
 

@@ -36,12 +36,12 @@ var (
 		},
 		{
 			Name:        "role-management",
-			Description: "Allows marathon ***Moderators*** to add and remove",
+			Description: "Allows marathon ***Moderators*** to add and remove roles from runners",
 			Options: []*discordgo.ApplicationCommandOption{
 				{
 					Type:        discordgo.ApplicationCommandOptionSubCommand,
 					Name:        "assign",
-					Description: "Assign roles to runners that have their discord linked to oengus",
+					Description: "Assign roles to accepted runners that have their discord linked to oengus",
 					Options: []*discordgo.ApplicationCommandOption{
 						{
 							Type:        discordgo.ApplicationCommandOptionString,
@@ -61,7 +61,7 @@ var (
 				{
 					Type:        discordgo.ApplicationCommandOptionSubCommand,
 					Name:        "remove",
-					Description: "Assign roles to runners that have their discord linked to oengus",
+					Description: "Remove the runner rule from runners that have their discord linked to oengus",
 					Options: []*discordgo.ApplicationCommandOption{
 						{
 							Type:        discordgo.ApplicationCommandOptionString,
