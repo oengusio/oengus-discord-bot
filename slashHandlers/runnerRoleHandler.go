@@ -68,8 +68,37 @@ func HandleRoleManagement(s *discordgo.Session, i *discordgo.InteractionCreate) 
 		return
 	}
 
+	//guild, _ := s.State.Gu\ild(i.GuildID)
+	//selfPerms := guild.Permissions
+
+	botHasPerms, _ := utils.MemberHasPermission(s, i.GuildID, i.AppID, discordgo.PermissionManageRoles)
+
+	if !botHasPerms {
+		s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+			Type: discordgo.InteractionResponseChannelMessageWithSource,
+			Data: &discordgo.InteractionResponseData{
+				Content: "I need the manage roles permission in order to give roles to people.",
+			},
+		})
+		return
+	}
+
 	// Never returns null
-	roleId := options["role"].RoleValue(nil, "").ID
+	role := options["role"].RoleValue(s, i.GuildID)
+	roleId := role.ID
+	selfMem, _ := s.GuildMember(i.GuildID, i.AppID) // This should not error LOL
+	maxRoleIdSelfMem := selfMem.Roles[0]
+	maxRoleSelfMem, _ := s.State.Role(i.GuildID, maxRoleIdSelfMem)
+
+	if role.Position > maxRoleSelfMem.Position {
+		s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+			Type: discordgo.InteractionResponseChannelMessageWithSource,
+			Data: &discordgo.InteractionResponseData{
+				Content: "I cannot interact with " + role.Mention() + ", please make sure that it is below my own bot role",
+			},
+		})
+		return
+	}
 
 	switch subCmd.Name {
 	case "assign":

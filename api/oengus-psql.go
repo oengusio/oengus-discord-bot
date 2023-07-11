@@ -160,10 +160,10 @@ func GetModeratorsForMarathon(marathonId string) ([]string, error) {
 
 	for rows.Next() {
 		// Scan is positional, not name based
-		err := rows.Scan(&discordId)
+		err2 := rows.Scan(&discordId)
 
-		if err != nil {
-			fmt.Println("Error scanning rows", err)
+		if err2 != nil {
+			fmt.Println("Error scanning rows", err2)
 			continue
 		}
 

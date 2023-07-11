@@ -121,7 +121,7 @@ func main() {
 	dg.State.TrackVoice = false
 	dg.State.TrackPresences = false
 
-	dg.AddHandler(ready)
+	dg.AddHandlerOnce(ready)
 
 	dg.AddHandler(func(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		if h, ok := commandHandlers[i.ApplicationCommandData().Name]; ok {
@@ -135,22 +135,6 @@ func main() {
 	err = dg.Open()
 	if err != nil {
 		fmt.Println("error opening connection,", err)
-		return
-	}
-
-	if RemoveCommands == "true" {
-		_, err := dg.ApplicationCommandBulkOverwrite(
-			dg.State.User.ID,
-			CommandGuildId,
-			[]*discordgo.ApplicationCommand{},
-		)
-
-		if err != nil {
-			fmt.Println("Error clearing commands", err)
-			return
-		}
-
-		defer dg.Close()
 		return
 	}
 
@@ -172,6 +156,21 @@ func main() {
 	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt, os.Kill)
 	<-sc
 	fmt.Println("Gracefully shutting down")
+
+	if RemoveCommands == "true" {
+		fmt.Println("Removing commands")
+
+		_, err := dg.ApplicationCommandBulkOverwrite(
+			dg.State.User.ID,
+			CommandGuildId,
+			[]*discordgo.ApplicationCommand{},
+		)
+
+		if err != nil {
+			fmt.Println("Error clearing commands", err)
+			return
+		}
+	}
 }
 
 func ready(s *discordgo.Session, event *discordgo.Ready) {
