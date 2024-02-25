@@ -23,7 +23,7 @@ func OengusStats(s *discordgo.Session, i *discordgo.InteractionCreate) {
 						},
 						{
 							Name:  "Yearly marathon stats",
-							Value: "**Marathons in 2018**: 2\n**Marathons in 2019**: 14\n**Marathons in 2020**: 159\n**Marathons in 2021**: 247\n**Marathons in 2022**: 260",
+							Value: "**Marathons in 2018**: 2\n**Marathons in 2019**: 14\n**Marathons in 2020**: 159\n**Marathons in 2021**: 247\n**Marathons in 2022**: 260\n**Marathons in 2023**: 274",
 						},
 					},
 				},
