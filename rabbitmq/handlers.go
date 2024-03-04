@@ -135,12 +135,14 @@ func handleSubmissionEdit(dg *discordgo.Session, data api.WebhookData, params ap
 			// Cheat a little with the parameters
 			if canPostNew {
 				sendNewGame(dg, newGame, submission, api.BotHookParams{
-					NewSub: params.NewSub,
+					MarathonId: params.MarathonId,
+					NewSub:     params.NewSub,
 				}, marathonName)
 			}
 
 			sendNewGame(dg, newGame, submission, api.BotHookParams{
-				NewSub: params.EditSub,
+				MarathonId: params.MarathonId,
+				NewSub:     params.EditSub,
 			}, marathonName)
 			continue
 		}
