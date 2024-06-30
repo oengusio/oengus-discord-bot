@@ -29,6 +29,10 @@ var eventHandlers = map[string]func(dg *discordgo.Session, data api.WebhookData,
 func parseObject(rawJson []byte) (*api.WebhookData, error) {
 	var data *api.WebhookData
 
+	myString := string(rawJson[:])
+
+	log.Println(myString)
+
 	jsonErr := json.Unmarshal(rawJson, &data)
 	if jsonErr != nil {
 		log.Println(jsonErr)
@@ -419,16 +423,19 @@ func sendSelectionApprovedEmbed(dg *discordgo.Session, channelId string, selecti
 		return
 	}
 
-	user, uErr := api.GetUserProfile(category.UserId)
+	user, uErr := api.GetUserProfile(selection.UserId)
 
 	if uErr != nil {
 		fmt.Println("User lookup failed " + gErr.Error())
 		return
 	}
 
-	opponentUsernames := utils.Map(category.Opponents, func(t api.OpponentCategoryDto) string {
-		return t.User.Username
-	})
+	opponentUsernames, oppErr := api.GetOpponentUsernames(category.Id)
+
+	if oppErr != nil {
+		fmt.Println("Opponent lookup failed " + oppErr.Error())
+		return
+	}
 
 	opponents := strings.Join(append([]string{user.Username}, opponentUsernames...), ", ")
 

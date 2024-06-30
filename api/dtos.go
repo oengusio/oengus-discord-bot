@@ -16,6 +16,7 @@ type SelectionDto struct {
 	MarathonId string      `json:"marathonId"`
 	Category   CategoryDto `json:"category"`
 	Status     string      `json:"status"`
+	UserId     int         `json:"userId"`
 }
 
 type CategoryDto struct {
@@ -26,13 +27,12 @@ type CategoryDto struct {
 	Video       string                `json:"video"`
 	Type        string                `json:"type"`
 	GameId      int                   `json:"gameId"`
-	UserId      int                   `json:"userId"`
 	Opponents   []OpponentCategoryDto `json:"opponents"`
 }
 
 type OpponentCategoryDto struct {
-	Id    int        `json:"id"`
-	User  ProfileDto `json:"user"`
-	Video string     `json:"video"`
+	Id     int    `json:"id"`
+	UserId int    `json:"userId"`
+	Video  string `json:"video"`
 	// TODO: availabilities?
 }

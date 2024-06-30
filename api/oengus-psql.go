@@ -76,6 +76,38 @@ func GetUserProfile(userId int) (ProfileDto, error) {
 	return profile, nil
 }
 
+func GetOpponentUsernames(categoryId int) ([]string, error) {
+	db := getConnection()
+	defer closeConnection(db)
+
+	sql := "SELECT u.username FROM users u INNER JOIN opponent o ON o.category_id = $1 INNER JOIN submission s ON s.id = o.opponent_submission_id WHERE u.id = s.user_id;"
+
+	rows, err := db.Query(context.Background(), sql, categoryId)
+
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "QueryRow failed: %v\n", err)
+		return nil, err
+	}
+
+	var usernames []string
+
+	for rows.Next() {
+		var username string
+
+		// Scan is positional, not name based
+		err := rows.Scan(&username)
+
+		if err != nil {
+			fmt.Println("Error scanning rows", err)
+			return nil, err
+		}
+
+		usernames = append(usernames, username)
+	}
+
+	return usernames, nil
+}
+
 func GetGameById(gameId int) (GameDto, error) {
 	db := getConnection()
 	defer closeConnection(db)
