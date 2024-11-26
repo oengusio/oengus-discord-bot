@@ -3,7 +3,7 @@ module oenugs-bot
 go 1.19
 
 require (
-	github.com/bwmarrin/discordgo v0.27.0
+	github.com/bwmarrin/discordgo v0.28.1
 	github.com/google/go-cmp v0.5.9
 	github.com/jackc/pgx/v4 v4.17.2
 	github.com/rabbitmq/amqp091-go v1.7.0
