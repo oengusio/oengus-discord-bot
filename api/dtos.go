@@ -19,6 +19,12 @@ type SelectionDto struct {
 	UserId     int         `json:"userId"`
 }
 
+type OpponentCategoryInfoDto struct {
+	Id       int    `json:"id"`
+	Name     string `json:"name"`
+	GameName string `json:"gameName"`
+}
+
 type CategoryDto struct {
 	Id          int                   `json:"id"`
 	Name        string                `json:"name"`

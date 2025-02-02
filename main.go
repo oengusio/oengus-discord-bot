@@ -181,7 +181,7 @@ func ready(s *discordgo.Session, event *discordgo.Ready) {
 	usd.Activities = []*discordgo.Activity{
 		{
 			Name: "your marathon",
-			Type: 3, // Watching
+			Type: discordgo.ActivityTypeWatching, // Watching
 			URL:  "",
 		},
 	}

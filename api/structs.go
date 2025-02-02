@@ -54,9 +54,10 @@ type SubmissionResponse struct {
 }
 
 type Submission struct {
-	Id    int    `json:"id"`
-	User  User   `json:"user"`
-	Games []Game `json:"games"`
+	Id        int        `json:"id"`
+	User      User       `json:"user"`
+	Games     []Game     `json:"games"`
+	Opponents []Opponent `json:"opponents"`
 }
 
 type Game struct {
@@ -75,6 +76,24 @@ type Category struct {
 	Video       string `json:"video"`
 	Type        string `json:"type"`
 	Status      string `json:"status"`
+}
+
+/*
+{
+    "id": 7783,
+    "categoryId": 78520,
+    "userId": 7498,
+    "submissionId": 40631,
+    "video": "https://www.youtube.com/watch?v=i3fu4i0rvw0&feature=youtu.be"
+},
+*/
+
+type Opponent struct {
+	Id           int    `json:"id"`
+	CategoryId   int    `json:"categoryId"`
+	UserId       int    `json:"userId"`
+	SubmissionId int    `json:"submissionId"`
+	Video        string `json:"video"`
 }
 
 // NOTE: we're only storing the most important bits
