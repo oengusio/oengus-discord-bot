@@ -23,6 +23,7 @@ type OpponentCategoryInfoDto struct {
 	Id       int    `json:"id"`
 	Name     string `json:"name"`
 	GameName string `json:"gameName"`
+	Estimate string `json:"estimate"`
 }
 
 type CategoryDto struct {

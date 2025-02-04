@@ -1,416 +1,418 @@
 package api
 
 import (
-    "context"
-    "encoding/json"
-    "errors"
-    "fmt"
-    "github.com/jackc/pgx/v4"
-    "os"
-    "strings"
+	"context"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"github.com/jackc/pgx/v4"
+	"os"
+	"strings"
 )
 
 // TODO: https://pkg.go.dev/golang.org/x/exp/slices#Contains
 
 func GetMarathonName(code string) (string, error) {
-    db := getConnection()
-    defer closeConnection(db)
+	db := getConnection()
+	defer closeConnection(db)
 
-    sql := "SELECT name FROM marathon WHERE id = $1"
+	sql := "SELECT name FROM marathon WHERE id = $1"
 
-    rows, err := db.Query(context.Background(), sql, code)
+	rows, err := db.Query(context.Background(), sql, code)
 
-    if err != nil {
-        return "", err
-    }
+	if err != nil {
+		return "", err
+	}
 
-    if rows.Next() {
-        var name string
+	if rows.Next() {
+		var name string
 
-        // Scan is positional, not name based
-        err := rows.Scan(&name)
+		// Scan is positional, not name based
+		err := rows.Scan(&name)
 
-        if err != nil {
-            return "", err
-        }
+		if err != nil {
+			return "", err
+		}
 
-        return name, nil
-    }
+		return name, nil
+	}
 
-    return "", errors.New("database lookup failed")
+	return "", errors.New("database lookup failed")
 }
 
 func GetUserProfile(userId int) (ProfileDto, error) {
-    db := getConnection()
-    defer closeConnection(db)
+	db := getConnection()
+	defer closeConnection(db)
 
-    var profile ProfileDto
+	var profile ProfileDto
 
-    sql := "SELECT id, username FROM users WHERE id = $1"
+	sql := "SELECT id, username FROM users WHERE id = $1"
 
-    rows, err := db.Query(context.Background(), sql, userId)
+	rows, err := db.Query(context.Background(), sql, userId)
 
-    if err != nil {
-        fmt.Fprintf(os.Stderr, "QueryRow failed: %v\n", err)
-        return profile, err
-    }
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "QueryRow failed: %v\n", err)
+		return profile, err
+	}
 
-    if rows.Next() {
-        var userId int
-        var username string
+	if rows.Next() {
+		var userId int
+		var username string
 
-        // Scan is positional, not name based
-        err := rows.Scan(&userId, &username)
+		// Scan is positional, not name based
+		err := rows.Scan(&userId, &username)
 
-        if err != nil {
-            fmt.Println("Error scanning rows", err)
-            return profile, err
-        }
+		if err != nil {
+			fmt.Println("Error scanning rows", err)
+			return profile, err
+		}
 
-        profile = ProfileDto{
-            Id:       userId,
-            Username: username,
-        }
-    }
+		profile = ProfileDto{
+			Id:       userId,
+			Username: username,
+		}
+	}
 
-    return profile, nil
+	return profile, nil
 }
 
 func GetOpponentUsernames(categoryId int) ([]string, error) {
-    db := getConnection()
-    defer closeConnection(db)
+	db := getConnection()
+	defer closeConnection(db)
 
-    sql := "SELECT u.username FROM users u INNER JOIN opponent o ON o.category_id = $1 INNER JOIN submission s ON s.id = o.opponent_submission_id WHERE u.id = s.user_id;"
+	sql := "SELECT u.username FROM users u INNER JOIN opponent o ON o.category_id = $1 INNER JOIN submission s ON s.id = o.opponent_submission_id WHERE u.id = s.user_id;"
 
-    rows, err := db.Query(context.Background(), sql, categoryId)
+	rows, err := db.Query(context.Background(), sql, categoryId)
 
-    if err != nil {
-        fmt.Fprintf(os.Stderr, "QueryRow failed: %v\n", err)
-        return nil, err
-    }
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "QueryRow failed: %v\n", err)
+		return nil, err
+	}
 
-    var usernames []string
+	var usernames []string
 
-    for rows.Next() {
-        var username string
+	for rows.Next() {
+		var username string
 
-        // Scan is positional, not name based
-        err := rows.Scan(&username)
+		// Scan is positional, not name based
+		err := rows.Scan(&username)
 
-        if err != nil {
-            fmt.Println("Error scanning rows", err)
-            return nil, err
-        }
+		if err != nil {
+			fmt.Println("Error scanning rows", err)
+			return nil, err
+		}
 
-        usernames = append(usernames, username)
-    }
+		usernames = append(usernames, username)
+	}
 
-    return usernames, nil
+	return usernames, nil
 }
 
 func GetGameById(gameId int) (GameDto, error) {
-    db := getConnection()
-    defer closeConnection(db)
+	db := getConnection()
+	defer closeConnection(db)
 
-    var game GameDto
+	var game GameDto
 
-    sql := "SELECT id, name, console FROM game WHERE id = $1"
+	sql := "SELECT id, name, console FROM game WHERE id = $1"
 
-    rows, err := db.Query(context.Background(), sql, gameId)
+	rows, err := db.Query(context.Background(), sql, gameId)
 
-    if err != nil {
-        fmt.Fprintf(os.Stderr, "QueryRow failed: %v\n", err)
-        return game, err
-    }
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "QueryRow failed: %v\n", err)
+		return game, err
+	}
 
-    if rows.Next() {
-        var id int
-        var name string
-        var console string
+	if rows.Next() {
+		var id int
+		var name string
+		var console string
 
-        // Scan is positional, not name based
-        err := rows.Scan(&id, &name, &console)
+		// Scan is positional, not name based
+		err := rows.Scan(&id, &name, &console)
 
-        if err != nil {
-            fmt.Println("Error scanning rows", err)
-            return game, err
-        }
+		if err != nil {
+			fmt.Println("Error scanning rows", err)
+			return game, err
+		}
 
-        game = GameDto{
-            Id:      id,
-            Name:    name,
-            Console: console,
-        }
-    }
+		game = GameDto{
+			Id:      id,
+			Name:    name,
+			Console: console,
+		}
+	}
 
-    return game, nil
+	return game, nil
 }
 
 func GetOpponentCategoryById(categoryId int) (OpponentCategoryInfoDto, error) {
-    db := getConnection()
-    defer closeConnection(db)
+	db := getConnection()
+	defer closeConnection(db)
 
-    var category OpponentCategoryInfoDto
+	var category OpponentCategoryInfoDto
 
-    sql := "SELECT category.id, category.name, game.name as gameName FROM category inner join game on game.id = category.game_id WHERE category.id = $1"
+	sql := "SELECT category.id, category.name, game.name as gameName, category.estimate FROM category inner join game on game.id = category.game_id WHERE category.id = $1"
 
-    rows, err := db.Query(context.Background(), sql, categoryId)
+	rows, err := db.Query(context.Background(), sql, categoryId)
 
-    if err != nil {
-        fmt.Fprintf(os.Stderr, "QueryRow failed: %v\n", err)
-        return category, err
-    }
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "QueryRow failed: %v\n", err)
+		return category, err
+	}
 
-    if rows.Next() {
-        var id int
-        var name string
-        var gameName string
+	if rows.Next() {
+		var id int
+		var name string
+		var gameName string
+		var estimate string
 
-        // Scan is positional, not name based
-        err := rows.Scan(&id, &name, &gameName)
+		// Scan is positional, not name based
+		err := rows.Scan(&id, &name, &gameName, &estimate)
 
-        if err != nil {
-            fmt.Println("Error scanning rows", err)
-            return category, err
-        }
+		if err != nil {
+			fmt.Println("Error scanning rows", err)
+			return category, err
+		}
 
-        category = OpponentCategoryInfoDto{
-            Id:       id,
-            Name:     name,
-            GameName: gameName,
-        }
-    }
+		category = OpponentCategoryInfoDto{
+			Id:       id,
+			Name:     name,
+			GameName: gameName,
+			Estimate: estimate,
+		}
+	}
 
-    return category, nil
+	return category, nil
 }
 
 func GetMarathonSelectionDone(marathonId string) (bool, error) {
-    db := getConnection()
-    defer closeConnection(db)
+	db := getConnection()
+	defer closeConnection(db)
 
-    sql := "SELECT is_selection_done FROM marathon WHERE id = $1"
+	sql := "SELECT is_selection_done FROM marathon WHERE id = $1"
 
-    rows, err := db.Query(context.Background(), sql, marathonId)
+	rows, err := db.Query(context.Background(), sql, marathonId)
 
-    if err != nil {
-        fmt.Fprintf(os.Stderr, "QueryRow failed: %v\n", err)
-        return false, err
-    }
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "QueryRow failed: %v\n", err)
+		return false, err
+	}
 
-    var isSelectionDone bool
+	var isSelectionDone bool
 
-    if rows.Next() {
-        // Scan is positional, not name based
-        err := rows.Scan(&isSelectionDone)
+	if rows.Next() {
+		// Scan is positional, not name based
+		err := rows.Scan(&isSelectionDone)
 
-        if err != nil {
-            fmt.Println("Error scanning rows", err)
-            return false, err
-        }
-    }
+		if err != nil {
+			fmt.Println("Error scanning rows", err)
+			return false, err
+		}
+	}
 
-    return isSelectionDone, nil
+	return isSelectionDone, nil
 }
 
 func GetModeratorsForMarathon(marathonId string) ([]string, error) {
-    db := getConnection()
-    defer closeConnection(db)
+	db := getConnection()
+	defer closeConnection(db)
 
-    sql := "SELECT discord_id FROM users WHERE (id IN (SELECT user_id FROM moderator WHERE marathon_id = $1) OR id = (SELECT creator_id FROM marathon WHERE id = $1)) AND discord_id <> '';"
+	sql := "SELECT discord_id FROM users WHERE (id IN (SELECT user_id FROM moderator WHERE marathon_id = $1) OR id = (SELECT creator_id FROM marathon WHERE id = $1)) AND discord_id <> '';"
 
-    rows, err := db.Query(context.Background(), sql, marathonId)
+	rows, err := db.Query(context.Background(), sql, marathonId)
 
-    if err != nil {
-        fmt.Fprintf(os.Stderr, "QueryRow failed: %v\n", err)
-        return nil, err
-    }
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "QueryRow failed: %v\n", err)
+		return nil, err
+	}
 
-    var discordIdList []string
-    var discordId string
+	var discordIdList []string
+	var discordId string
 
-    for rows.Next() {
-        // Scan is positional, not name based
-        err2 := rows.Scan(&discordId)
+	for rows.Next() {
+		// Scan is positional, not name based
+		err2 := rows.Scan(&discordId)
 
-        if err2 != nil {
-            fmt.Println("Error scanning rows", err2)
-            continue
-        }
+		if err2 != nil {
+			fmt.Println("Error scanning rows", err2)
+			continue
+		}
 
-        discordIdList = append(discordIdList, discordId)
-    }
+		discordIdList = append(discordIdList, discordId)
+	}
 
-    return discordIdList, nil
+	return discordIdList, nil
 }
 
 func GetAcceptedRunnerDiscordIds(marathonId string) ([]string, error) {
-    db := getConnection()
-    defer closeConnection(db)
+	db := getConnection()
+	defer closeConnection(db)
 
-    categoryIds, err := getAcceptedCategoryIds(marathonId, db)
+	categoryIds, err := getAcceptedCategoryIds(marathonId, db)
 
-    if err != nil {
-        fmt.Println("Failed to fetch category ids for", marathonId, err)
-        return nil, err
-    }
+	if err != nil {
+		fmt.Println("Failed to fetch category ids for", marathonId, err)
+		return nil, err
+	}
 
-    userIDs, err := getUserIdsForCategoryIds(categoryIds, db)
+	userIDs, err := getUserIdsForCategoryIds(categoryIds, db)
 
-    if err != nil {
-        fmt.Println("Failed to fetch user ids for", marathonId, err)
-        return nil, err
-    }
+	if err != nil {
+		fmt.Println("Failed to fetch user ids for", marathonId, err)
+		return nil, err
+	}
 
-    fmt.Println(userIDs)
+	fmt.Println(userIDs)
 
-    strs, _ := json.Marshal(userIDs)
-    userIdsParsed := strings.Trim(string(strs), "[]")
-    sql := fmt.Sprintf("SELECT username, discord_id FROM users WHERE id IN (%s)", userIdsParsed)
+	strs, _ := json.Marshal(userIDs)
+	userIdsParsed := strings.Trim(string(strs), "[]")
+	sql := fmt.Sprintf("SELECT username, discord_id FROM users WHERE id IN (%s)", userIdsParsed)
 
-    rows, err := db.Query(context.Background(), sql)
+	rows, err := db.Query(context.Background(), sql)
 
-    if err != nil {
-        fmt.Fprintf(os.Stderr, "QueryRow failed: %v\n", err)
-        return nil, err
-    }
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "QueryRow failed: %v\n", err)
+		return nil, err
+	}
 
-    var usernameTmp string
-    var discordIdTmp string
-    var finalDiscordIds []string
+	var usernameTmp string
+	var discordIdTmp string
+	var finalDiscordIds []string
 
-    for rows.Next() {
-        err := rows.Scan(&usernameTmp, &discordIdTmp)
+	for rows.Next() {
+		err := rows.Scan(&usernameTmp, &discordIdTmp)
 
-        if err != nil {
-            fmt.Println("Error scanning user rows", err)
-            continue
-        }
+		if err != nil {
+			fmt.Println("Error scanning user rows", err)
+			continue
+		}
 
-        if discordIdTmp == "" {
-            fmt.Println("NO DISCORD ID FOR USER", usernameTmp)
-            continue
-        } else {
-            fmt.Println("Discord id for user", usernameTmp, "is", discordIdTmp)
-        }
+		if discordIdTmp == "" {
+			fmt.Println("NO DISCORD ID FOR USER", usernameTmp)
+			continue
+		} else {
+			fmt.Println("Discord id for user", usernameTmp, "is", discordIdTmp)
+		}
 
-        finalDiscordIds = append(finalDiscordIds, discordIdTmp)
-    }
+		finalDiscordIds = append(finalDiscordIds, discordIdTmp)
+	}
 
-    // TODO: remove dupes
+	// TODO: remove dupes
 
-    return finalDiscordIds, nil
+	return finalDiscordIds, nil
 }
 
 func getAcceptedCategoryIds(marathonId string, db *pgx.Conn) ([]int, error) {
-    // Todo = 0
-    // Rejected = 1
-    // Bonus = 2
-    // Validated = 3
-    // Backup = 4
+	// Todo = 0
+	// Rejected = 1
+	// Bonus = 2
+	// Validated = 3
+	// Backup = 4
 
-    sql := "SELECT category_id FROM selection WHERE marathon_id = $1 AND status IN (2, 3, 4)"
+	sql := "SELECT category_id FROM selection WHERE marathon_id = $1 AND status IN (2, 3, 4)"
 
-    rows, err := db.Query(context.Background(), sql, marathonId)
+	rows, err := db.Query(context.Background(), sql, marathonId)
 
-    if err != nil {
-        fmt.Fprintf(os.Stderr, "QueryRow failed: %v\n", err)
-        return nil, err
-    }
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "QueryRow failed: %v\n", err)
+		return nil, err
+	}
 
-    var categoryIds []int
-    var categoryId int
+	var categoryIds []int
+	var categoryId int
 
-    for rows.Next() {
-        // Scan is positional, not name based
-        err := rows.Scan(&categoryId)
+	for rows.Next() {
+		// Scan is positional, not name based
+		err := rows.Scan(&categoryId)
 
-        if err != nil {
-            fmt.Println("Error scanning rows", err)
-            continue
-        }
+		if err != nil {
+			fmt.Println("Error scanning rows", err)
+			continue
+		}
 
-        categoryIds = append(categoryIds, categoryId)
-    }
+		categoryIds = append(categoryIds, categoryId)
+	}
 
-    fmt.Println(categoryIds)
+	fmt.Println(categoryIds)
 
-    return categoryIds, nil
+	return categoryIds, nil
 }
 
 func getUserIdsForCategoryIds(categoryIds []int, db *pgx.Conn) ([]int, error) {
-    // TODO: KEEP MULTIPLAYER RUNS IN MIND
-    // Step 1: main games (hell of a query)
-    // https://stackoverflow.com/a/54126847
-    strs, _ := json.Marshal(categoryIds)
-    catIdsParsed := strings.Trim(string(strs), "[]")
-    catSql := fmt.Sprintf("SELECT game_id FROM category WHERE id IN (%s)", catIdsParsed)
-    gameSql := fmt.Sprintf("SELECT submission_id FROM game WHERE id IN (%s)", catSql)
-    sql := fmt.Sprintf("SELECT user_id FROM submission WHERE id IN (%s)", gameSql)
+	// TODO: KEEP MULTIPLAYER RUNS IN MIND
+	// Step 1: main games (hell of a query)
+	// https://stackoverflow.com/a/54126847
+	strs, _ := json.Marshal(categoryIds)
+	catIdsParsed := strings.Trim(string(strs), "[]")
+	catSql := fmt.Sprintf("SELECT game_id FROM category WHERE id IN (%s)", catIdsParsed)
+	gameSql := fmt.Sprintf("SELECT submission_id FROM game WHERE id IN (%s)", catSql)
+	sql := fmt.Sprintf("SELECT user_id FROM submission WHERE id IN (%s)", gameSql)
 
-    rows, err := db.Query(context.Background(), sql)
+	rows, err := db.Query(context.Background(), sql)
 
-    if err != nil {
-        fmt.Fprintf(os.Stderr, "QueryRow failed: %v\n", err)
-        return nil, err
-    }
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "QueryRow failed: %v\n", err)
+		return nil, err
+	}
 
-    var userIds []int
-    var userIdTmp int
+	var userIds []int
+	var userIdTmp int
 
-    for rows.Next() {
-        // Scan is positional, not name based
-        err := rows.Scan(&userIdTmp)
+	for rows.Next() {
+		// Scan is positional, not name based
+		err := rows.Scan(&userIdTmp)
 
-        if err != nil {
-            fmt.Println("Error scanning row", err)
-            continue
-        }
+		if err != nil {
+			fmt.Println("Error scanning row", err)
+			continue
+		}
 
-        userIds = append(userIds, userIdTmp)
-    }
+		userIds = append(userIds, userIdTmp)
+	}
 
-    // Step 2: searching for opponent users
-    sql = fmt.Sprintf(
-        "select user_id from submission where id in (SELECT opponent_submission_id FROM opponent WHERE category_id in (%s))",
-        catIdsParsed)
+	// Step 2: searching for opponent users
+	sql = fmt.Sprintf(
+		"select user_id from submission where id in (SELECT opponent_submission_id FROM opponent WHERE category_id in (%s))",
+		catIdsParsed)
 
-    rows, err = db.Query(context.Background(), sql)
+	rows, err = db.Query(context.Background(), sql)
 
-    if err != nil {
-        fmt.Fprintf(os.Stderr, "QueryRow failed: %v\n", err)
-        return nil, err
-    }
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "QueryRow failed: %v\n", err)
+		return nil, err
+	}
 
-    for rows.Next() {
-        // Scan is positional, not name based
-        err := rows.Scan(&userIdTmp)
+	for rows.Next() {
+		// Scan is positional, not name based
+		err := rows.Scan(&userIdTmp)
 
-        if err != nil {
-            fmt.Println("Error scanning row 2", err)
-            continue
-        }
+		if err != nil {
+			fmt.Println("Error scanning row 2", err)
+			continue
+		}
 
-        userIds = append(userIds, userIdTmp)
-    }
+		userIds = append(userIds, userIdTmp)
+	}
 
-    return userIds, nil
+	return userIds, nil
 }
 
 func getConnection() *pgx.Conn {
-    conn, err := pgx.Connect(context.Background(), os.Getenv("DATABASE_URI"))
+	conn, err := pgx.Connect(context.Background(), os.Getenv("DATABASE_URI"))
 
-    if err != nil {
-        fmt.Fprintf(os.Stderr, "Unable to connect to database: %v\n", err)
-        os.Exit(1)
-    }
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Unable to connect to database: %v\n", err)
+		os.Exit(1)
+	}
 
-    return conn
+	return conn
 }
 
 func closeConnection(db *pgx.Conn) {
-    err := db.Close(context.Background())
+	err := db.Close(context.Background())
 
-    if err != nil {
-        fmt.Println(err)
-    }
+	if err != nil {
+		fmt.Println(err)
+	}
 }
