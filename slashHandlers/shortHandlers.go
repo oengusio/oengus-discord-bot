@@ -2,6 +2,8 @@ package slashHandlers
 
 import (
 	"fmt"
+	"oenugs-bot/globals"
+
 	"github.com/bwmarrin/discordgo"
 )
 
@@ -22,8 +24,14 @@ func OengusStats(s *discordgo.Session, i *discordgo.InteractionCreate) {
 							),
 						},
 						{
-							Name:  "Yearly marathon stats",
-							Value: "**Marathons in 2018**: 2\n**Marathons in 2019**: 14\n**Marathons in 2020**: 159\n**Marathons in 2021**: 247\n**Marathons in 2022**: 260\n**Marathons in 2023**: 274",
+							Name: "Yearly marathon stats",
+							Value: "**Marathons in 2018**: 2\n" +
+								"**Marathons in 2019**: 14\n" +
+								"**Marathons in 2020**: 159\n" +
+								"**Marathons in 2021**: 247\n" +
+								"**Marathons in 2022**: 260\n" +
+								"**Marathons in 2023**: 274\n" +
+								"**Marathons in 2024**: 241",
 						},
 					},
 				},
@@ -37,7 +45,7 @@ func BotInvite(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
 			// Flags:
-			Content: "Invite me with this link: <https://ong.run/bot>",
+			Content: "Invite me with this link: <" + globals.ShortUrl + "/bot>",
 		},
 	})
 }
@@ -47,7 +55,7 @@ func DiscordInvite(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
 			// Flags:
-			Content: "You can join the Oengus discord by clicking this link: <https://ong.run/discord>",
+			Content: "You can join the Oengus discord by clicking this link: <" + globals.ShortUrl + "/discord>",
 		},
 	})
 }
