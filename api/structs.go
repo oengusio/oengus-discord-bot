@@ -1,14 +1,15 @@
 package api
 
 type WebhookData struct {
-	Event              string         `json:"event"`
-	Url                string         `json:"url"`
-	Game               Game           `json:"game"`
-	Category           Category       `json:"category"`
-	Submission         Submission     `json:"submission"` // TODO: make DTOs for submissions
-	OriginalSubmission Submission     `json:"original_submission"`
-	DeletedBy          User           `json:"deleted_by"`
-	Selections         []SelectionDto `json:"selections"`
+	Event              string               `json:"event"`
+	Url                string               `json:"url"`
+	Game               Game                 `json:"game"`
+	Category           Category             `json:"category"`
+	Submission         Submission           `json:"submission"` // TODO: make DTOs for submissions
+	OriginalSubmission Submission           `json:"original_submission"`
+	DeletedBy          User                 `json:"deleted_by"`
+	Selections         []SelectionDto       `json:"selections"`
+	SubmissionStatus   SubmissionOpenStatus `json:"submission_status"`
 }
 
 type BotHookParams struct {
@@ -23,6 +24,11 @@ type MarathonStats struct {
 	RunnerCount     int    `json:"runnerCount"`
 	TotalLength     string `json:"totalLength"`
 	AverageEstimate string `json:"averageEstimate"`
+}
+
+type SubmissionOpenStatus struct {
+	Open     bool   `json:"open"`
+	ClosesAt string `json:"closes_at"`
 }
 
 // TODO: Might store this as json in the database tbh

@@ -18,12 +18,13 @@ import (
 var shortUrl = globals.ShortUrl
 var eventHandlers = map[string]func(dg *discordgo.Session, data api.WebhookData, params api.BotHookParams){
 	// TODO: donation (When we support it again)
-	"SUBMISSION_ADD":    handleSubmissionAdd,
-	"SUBMISSION_EDIT":   handleSubmissionEdit,
-	"SUBMISSION_DELETE": handleSubmissionDelete,
-	"GAME_DELETE":       handleGameDelete,
-	"CATEGORY_DELETE":   handleCategoryDelete,
-	"SELECTION_DONE":    handleSelectionDone,
+	"SUBMISSION_ADD":                 handleSubmissionAdd,
+	"SUBMISSION_EDIT":                handleSubmissionEdit,
+	"SUBMISSION_DELETE":              handleSubmissionDelete,
+	"GAME_DELETE":                    handleGameDelete,
+	"CATEGORY_DELETE":                handleCategoryDelete,
+	"SELECTION_DONE":                 handleSelectionDone,
+	"SUBMISSION_OPEN_STATUS_CHANGED": handleSubmissionStatusChanged,
 }
 
 func parseObject(rawJson []byte) (*api.WebhookData, error) {
