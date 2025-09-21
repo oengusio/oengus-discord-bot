@@ -14,7 +14,7 @@ import (
 )
 
 // TODO: replace bot webhook with settings.
-var shortUrl = "https://oengus.fun"
+var shortUrl = "https://ong.run"
 var eventHandlers = map[string]func(dg *discordgo.Session, data api.WebhookData, params api.BotHookParams){
     // TODO: donation (When we support it again)
     "SUBMISSION_ADD":    handleSubmissionAdd,

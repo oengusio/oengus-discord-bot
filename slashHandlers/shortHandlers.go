@@ -37,7 +37,7 @@ func BotInvite(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
 			// Flags:
-			Content: "Invite me with this link: <https://oengus.fun/bot>",
+			Content: "Invite me with this link: <https://ong.run/bot>",
 		},
 	})
 }
@@ -47,7 +47,7 @@ func DiscordInvite(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
 			// Flags:
-			Content: "You can join the Oengus discord by clicking this link: <https://oengus.fun/discord>",
+			Content: "You can join the Oengus discord by clicking this link: <https://ong.run/discord>",
 		},
 	})
 }
