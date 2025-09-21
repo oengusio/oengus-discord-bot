@@ -78,16 +78,6 @@ type Category struct {
     Status      string `json:"status"`
 }
 
-/*
-{
-    "id": 7783,
-    "categoryId": 78520,
-    "userId": 7498,
-    "submissionId": 40631,
-    "video": "https://www.youtube.com/watch?v=i3fu4i0rvw0&feature=youtu.be"
-},
-*/
-
 type Opponent struct {
     Id           int    `json:"id"`
     CategoryId   int    `json:"categoryId"`
