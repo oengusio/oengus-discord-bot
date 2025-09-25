@@ -27,8 +27,9 @@ type MarathonStats struct {
 }
 
 type SubmissionOpenStatus struct {
-	Open     bool   `json:"open"`
-	ClosesAt string `json:"closes_at"`
+	Open         bool   `json:"open"`
+	MarathonName string `json:"marathon_name"`
+	ClosesAt     string `json:"closes_at"`
 }
 
 // TODO: Might store this as json in the database tbh
